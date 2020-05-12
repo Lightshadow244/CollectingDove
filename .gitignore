@@ -130,3 +130,6 @@ dmypy.json
 
 # migrations
 migration/
+
+# private
+*.private
