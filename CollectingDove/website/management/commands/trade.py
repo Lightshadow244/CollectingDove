@@ -61,7 +61,8 @@ class Command(BaseCommand):
             else:
                 print('continue')
                 compareRate = lastTrade.rate
-            print(compareRate)
+
+            #print(compareRate)
 
         else:
             print('status_code ' + jasonValue['status_code'])
