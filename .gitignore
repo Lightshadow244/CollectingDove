@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # migrations
-migration/
+migrations/
 
 # private
 *.private
