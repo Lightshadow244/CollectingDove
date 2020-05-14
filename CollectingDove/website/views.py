@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from website.models import Trade_BTC_test
+from website.models import Trade_BTC_test, StopTrade
 import csv
 
 
@@ -17,3 +17,11 @@ def exportValue(request):
         writer.writerow([trade.time, trade.rate, trade.eur, trade.btc])
 
     return response
+
+def stopTrade(request):
+    StopTrade(stop=True).save()
+    return HttpResponse("Trade stopped")
+
+def startTrade(request):
+    StopTrade(stop=False).save()
+    return HttpResponse("Trade started")

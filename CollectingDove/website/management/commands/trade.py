@@ -56,6 +56,7 @@ class Command(BaseCommand):
             compareDeltaRate = 100.0
             print('Settings are: test on small')
 
+# check if trade is allowed or it is a test
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
             #jsonValue = request_basic(self)
