@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime
+from django.utils import timezone
 
 """for django API
 from website.models import Trade_BTC_test
@@ -10,7 +11,7 @@ t = Trade_BTC_small(time=(datetime.now()-timedelta(days=3)).strftime('%Y-%m-%d %
 
 # Create your models hertime=
 class Trade_BTC(models.Model):
-    time = models.DateTimeField(default=datetime.now, blank=False)
+    time = models.DateTimeField(default=timezone.now, blank=False)
     rate = models.FloatField(blank=False)
     btc = models.FloatField(blank=True, null=True)
     eur = models.FloatField(blank=True, null=True)
@@ -26,8 +27,16 @@ class Trade_BTC_large(Trade_BTC):
     pass
 
 class Trade_BTC_test(models.Model):
-    time = models.DateTimeField(default=datetime.now, blank=False)
+    time = models.DateTimeField(default=timezone.now, blank=False)
     rate = models.FloatField(blank=False)
     btc = models.FloatField(blank=True, null=True)
     eur = models.FloatField(blank=True, null=True)
     eur_to_btc = models.BooleanField(blank=True, null=True)
+
+class Total_Value(models.Model):
+    time = models.DateTimeField(default=timezone.now)
+    btc = models.FloatField(blank=True, null=True)
+    eur = models.FloatField(blank=True, null=True)
+
+class Total_Value_Test(Total_Value):
+    pass
