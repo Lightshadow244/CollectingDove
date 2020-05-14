@@ -40,3 +40,7 @@ class Total_Value(models.Model):
 
 class Total_Value_Test(Total_Value):
     pass
+
+class StopTrade(models.Model):
+    time = models.DateTimeField(default=timezone.now)
+    stop = models.BooleanField(default=True)

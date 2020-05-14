@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime, timedelta
 from django.utils import timezone, dateformat
 import requests
-from website.models import Trade_BTC_small, Trade_BTC_medium, Trade_BTC_large, Trade_BTC_test, Total_Value, Total_Value_Test
+from website.models import Trade_BTC_small, Trade_BTC_medium, Trade_BTC_large, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade
 import random
 
 ################################################################################
@@ -56,30 +56,34 @@ class Command(BaseCommand):
             compareDeltaRate = 100.0
             print('Settings are: test on small')
 
-        #jsonValue = request_basic(self)
-        jsonValue = request_random(self)
+        if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
-        if('status_code' not in jsonValue):
-            lastTrade = trades.last()
+            #jsonValue = request_basic(self)
+            jsonValue = request_random(self)
+
+            if('status_code' not in jsonValue):
+                lastTrade = trades.last()
 #check if init of the db is nessecesary
-            print('check last entry in database')
-            if(lastTrade is None):
-                reset_trade(self, 'nothing in DB', jsonValue)
-            #elif(lastTrade.time <= (timezone.now()- timedelta(days=deltaDays))):
-            #    compareRate = reset_trade(self, 'too old', jasonValue)
-            else:
-# define the direction of the trade
-                if(lastTrade.eur_to_btc is not None):
-                    print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
+                print('check last entry in database')
+                if(lastTrade is None):
+                    reset_trade(self, 'nothing in DB', jsonValue)
+                #elif(lastTrade.time <= (timezone.now()- timedelta(days=deltaDays))):
+                #    compareRate = reset_trade(self, 'too old', jasonValue)
                 else:
-                    print('set eur_to_btc')
-                    set_eur_to_btc(self,lastTrade)
-                    print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
+# define the direction of the trade
+                    if(lastTrade.eur_to_btc is not None):
+                        print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
+                    else:
+                        print('set eur_to_btc')
+                        set_eur_to_btc(self,lastTrade)
+                        print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
 # check if trade should be initiated
-                if(TradeEurBtcTest(self, lastTrade, jsonValue['rate'], compareDeltaRate)):
-                    print('Trade success')
+                    if(TradeEurBtcTest(self, lastTrade, jsonValue['rate'], compareDeltaRate)):
+                        print('Trade success')
+            else:
+                print('status_code ' + jsonValue['status_code'])
         else:
-            print('status_code ' + jsonValue['status_code'])
+            print('Trade stopped')
 
 ################################################################################
 
