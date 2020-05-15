@@ -13,6 +13,8 @@ deltaDays = 7
 compareDeltaRate = 0
 trades = {}
 mode = 0
+debug = True
+debugText = ''
 #compareRate = None
 
 ################################################################################
@@ -24,8 +26,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        global test, deltaDays, trades, mode, compareDeltaRate
+        global test, deltaDays, trades, mode, compareDeltaRate, debugText
         DBInit = False
+        debugText = dateformat.format(datetime.now(), 'Y-m-d H:m:s,')
 
         if(options['mode'] == 1):
             test = False
@@ -33,57 +36,59 @@ class Command(BaseCommand):
             trades = Trade_BTC_small.objects.order_by('time')
             mode = 1
             compareDeltaRate = 100.0
-            print('Settings are: productive on small')
+            debugText+='1,'
         elif(options['mode'] == 2):
             test = False
             deltaDays = 7
             trades = Trade_BTC_medium.objects.order_by('time')
             mode = 2
             compareDeltaRate = 500.0
-            print('Settings are: productive on medium')
+            debugText+='2,'
         elif(options['mode'] == 3):
             test = False
             deltaDays = 14
             trades = Trade_BTC_large.objects.order_by('time')
             mode = 3
             compareDeltaRate = 1000.0
-            print('Settings are: productive on large')
+            debugText+='3,'
         elif(options['mode'] == 0):
             test = True
             deltaDays = 1
             trades = Trade_BTC_test.objects.order_by('time')
             mode = 0
             compareDeltaRate = 100.0
-            print('Settings are: test on small')
-
+            debugText+='0,'
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
-            jsonValue = request_basic(self)
-            #jsonValue = request_random(self)
+            #jsonValue = request_basic(self)
+            jsonValue = request_random(self)
 
             if('status_code' not in jsonValue):
                 lastTrade = trades.last()
 #check if init of the db is nessecesary
-                print('check last entry in database')
+                #print('check last entry in database')
                 if(lastTrade is None):
                     reset_trade(self, 'nothing in DB', jsonValue)
                 #elif(lastTrade.time <= (timezone.now()- timedelta(days=deltaDays))):
                 #    compareRate = reset_trade(self, 'too old', jasonValue)
                 else:
 # define the direction of the trade
-                    if(lastTrade.eur_to_btc is not None):
-                        print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
-                    else:
+                    if(lastTrade.eur_to_btc is None):
                         print('set eur_to_btc')
                         set_eur_to_btc(self,lastTrade)
-                        print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
+                    #else:
+                        #print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
+
 # check if trade should be initiated
                     if(TradeEurBtcTest(self, lastTrade, jsonValue['rate'], compareDeltaRate, mode)):
-                        print('Trade success')
+                        pass
             else:
                 print('status_code ' + jsonValue['status_code'])
         else:
             print('Trade stopped')
+
+        if(debug):
+            print(debugText)
 
 ################################################################################
 
@@ -114,7 +119,7 @@ def request_random(self,):
     r = {}
     #r['time'] = dateformat.format(timezone.now(), 'Y-m-d H:m:s')
     r['time'] = dateformat.format(datetime.now(), 'Y-m-d H:m:s')
-    r['rate'] = '%.3f' % random.uniform(7500.5, 8500.5)
+    r['rate'] = '%.3f' % random.uniform(7500.5, 9000.5)
     #print(str(r['time']) + ' ' + str(r['rate']))
     return(r)
 
@@ -149,21 +154,24 @@ def set_eur_to_btc(self, lastTrade):
         print('No last Value in DB')
 
 def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
+    global debugText
     r = False
     deltaRate = lastTrade.rate - float(rate)
     lastValue = Total_Value_Test.objects.order_by('time').last()
-    print('lastTradeRate ' + str(lastTrade.rate) + ' rate ' + str(rate) + ' deltaRate ' + str(deltaRate))
+    debugText += str(lastTrade.rate) + ',' + str(rate) + ','
+    #print('lastTradeRate ' + str(lastTrade.rate) + ' rate ' + str(rate) + ' deltaRate ' + str(deltaRate))
 #eur_to_btc from lastTrade, do the other thing
     if(lastValue is not None):
         if(lastTrade.eur_to_btc):
             if(deltaRate < 0 and abs(deltaRate) > compareDeltaRate):
                 if(mode == 0):
-                    print('TRADE btc into eur')
+                    #print('TRADE btc into eur')
 
                     sellBtc = lastValue.btc
                     buyEur = sellBtc * float(rate)
 
-                    print('sellBtc ' + str(sellBtc) + ' buyEur ' + str(buyEur))
+                    #print('sellBtc ' + str(sellBtc) + ' buyEur ' + str(buyEur))
+                    debugText += str(sellBtc) + 'btc,' + str(buyEur) + 'eur,'
 
                     newValue = Total_Value_Test(eur=buyEur, btc=0)
                     newValue.save()
@@ -177,12 +185,13 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
         else:
             if(deltaRate > 0 and abs(deltaRate) > compareDeltaRate):
                 if(mode == 0):
-                    print('TRADE eur into btc')
+                    #print('TRADE eur into btc')
 
                     sellEur = lastValue.eur
                     buyBtc = sellEur / float(rate)
 
-                    print(str(sellEur) + ' ' + str(buyBtc))
+                    #print(str(sellEur) + ' ' + str(buyBtc))
+                    debugText += str(sellEur) + 'eur,' + str(buyBtc) + 'btc,'
 
                     newValue = Total_Value_Test(eur=0, btc=buyBtc)
                     newValue.save()
