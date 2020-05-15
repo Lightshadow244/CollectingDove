@@ -181,6 +181,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                 else:
                     pass
             else:
+                pass
                 #print('btc to eur was not traded')
         else:
             if(deltaRate > 0 and abs(deltaRate) > compareDeltaRate):
@@ -201,6 +202,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                 else:
                     pass
             else:
+                pass
                 #print('eur to btc was not traded')
     else:
         print('No last Value in DB')
