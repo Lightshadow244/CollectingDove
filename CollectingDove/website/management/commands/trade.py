@@ -166,6 +166,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
             if(deltaRate < 0 and abs(deltaRate) > compareDeltaRate):
                 if(mode == 0):
                     #print('TRADE btc into eur')
+                    debugText += 'btcToEur,'
 
                     sellBtc = lastValue.btc
                     buyEur = sellBtc * float(rate)
@@ -187,6 +188,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
             if(deltaRate > 0 and abs(deltaRate) > compareDeltaRate):
                 if(mode == 0):
                     #print('TRADE eur into btc')
+                    debugText += 'eurToBtc,'
 
                     sellEur = lastValue.eur
                     buyBtc = sellEur / float(rate)
