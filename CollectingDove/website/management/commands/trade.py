@@ -58,8 +58,8 @@ class Command(BaseCommand):
 
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
-            #jsonValue = request_basic(self)
-            jsonValue = request_random(self)
+            jsonValue = request_basic(self)
+            #jsonValue = request_random(self)
 
             if('status_code' not in jsonValue):
                 lastTrade = trades.last()
@@ -78,7 +78,7 @@ class Command(BaseCommand):
                         set_eur_to_btc(self,lastTrade)
                         print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
 # check if trade should be initiated
-                    if(TradeEurBtcTest(self, lastTrade, jsonValue['rate'], compareDeltaRate)):
+                    if(TradeEurBtcTest(self, lastTrade, jsonValue['rate'], compareDeltaRate, mode)):
                         print('Trade success')
             else:
                 print('status_code ' + jsonValue['status_code'])
@@ -148,41 +148,51 @@ def set_eur_to_btc(self, lastTrade):
     else:
         print('No last Value in DB')
 
-def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate):
+def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
     r = False
     deltaRate = lastTrade.rate - float(rate)
     lastValue = Total_Value_Test.objects.order_by('time').last()
+    print('lastTradeRate ' + str(lastTrade.rate) + ' rate ' + str(rate) + ' deltaRate ' + str(deltaRate))
 #eur_to_btc from lastTrade, do the other thing
     if(lastValue is not None):
         if(lastTrade.eur_to_btc):
-            #print('lastTradeRate ' + str(lastTrade.rate) + ' rate ' + str(rate) + ' deltaRate ' + str(deltaRate))
             if(deltaRate < 0 and abs(deltaRate) > compareDeltaRate):
-                print('TRADE btc into eur')
+                if(mode == 0):
+                    print('TRADE btc into eur')
 
-                sellBtc = lastValue.btc
-                buyEur = sellBtc * float(rate)
+                    sellBtc = lastValue.btc
+                    buyEur = sellBtc * float(rate)
 
-                print('sellBtc ' + str(sellBtc) + ' buyEur ' + str(buyEur))
+                    print('sellBtc ' + str(sellBtc) + ' buyEur ' + str(buyEur))
 
-                newValue = Total_Value_Test(eur=buyEur, btc=0)
-                newValue.save()
-                newTrade = Trade_BTC_test(rate=rate,eur=buyEur,btc=sellBtc*-1, eur_to_btc=False)
-                newTrade.save()
-                r = True
+                    newValue = Total_Value_Test(eur=buyEur, btc=0)
+                    newValue.save()
+                    newTrade = Trade_BTC_test(rate=rate,eur=buyEur,btc=sellBtc*-1, eur_to_btc=False)
+                    newTrade.save()
+                    r = True
+                else:
+                    pass
+            else:
+                print('btc to eur was not traded')
         else:
             if(deltaRate > 0 and abs(deltaRate) > compareDeltaRate):
-                print('TRADE eur into btc')
+                if(mode == 0):
+                    print('TRADE eur into btc')
 
-                sellEur = lastValue.eur
-                buyBtc = sellEur / float(rate)
+                    sellEur = lastValue.eur
+                    buyBtc = sellEur / float(rate)
 
-                print(str(sellEur) + ' ' + str(buyBtc))
+                    print(str(sellEur) + ' ' + str(buyBtc))
 
-                newValue = Total_Value_Test(eur=0, btc=buyBtc)
-                newValue.save()
-                newTrade = Trade_BTC_test(rate=rate,eur=sellEur*-1,btc=buyBtc, eur_to_btc=True)
-                newTrade.save()
-                r = True
+                    newValue = Total_Value_Test(eur=0, btc=buyBtc)
+                    newValue.save()
+                    newTrade = Trade_BTC_test(rate=rate,eur=sellEur*-1,btc=buyBtc, eur_to_btc=True)
+                    newTrade.save()
+                    r = True
+                else:
+                    pass
+            else:
+                print('eur to btc was not traded')
     else:
         print('No last Value in DB')
     return(r)
