@@ -163,7 +163,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
 #eur_to_btc from lastTrade, do the other thing
     if(lastValue is not None):
         if(lastTrade.eur_to_btc):
-            debugText += 'eurToBtc,'
+            debugText += 'btcToEur,'
             if(deltaRate < 0 and abs(deltaRate) > compareDeltaRate):
                 if(mode == 0):
                     #print('TRADE btc into eur')
@@ -186,7 +186,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                 pass
                 #print('btc to eur was not traded')
         else:
-            debugText += 'eurToBtc,'
+            debugText += 'btcToEur,'
             if(deltaRate > 0 and abs(deltaRate) > compareDeltaRate):
                 if(mode == 0):
                     #print('TRADE eur into btc')
