@@ -60,8 +60,8 @@ class Command(BaseCommand):
             debugText+='0,'
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
-            #jsonValue = request_basic(self)
-            jsonValue = request_random(self)
+            jsonValue = request_basic(self)
+            #jsonValue = request_random(self)
 
             if('status_code' not in jsonValue):
                 lastTrade = trades.last()
