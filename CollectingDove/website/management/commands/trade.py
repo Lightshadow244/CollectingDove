@@ -28,7 +28,8 @@ class Command(BaseCommand):
 
         global test, deltaDays, trades, mode, compareDeltaRate, debugText
         DBInit = False
-        debugText = dateformat.format(datetime.now(), 'Y-m-d H:m:s,')
+        debugText = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
+
 
         if(options['mode'] == 1):
             test = False
