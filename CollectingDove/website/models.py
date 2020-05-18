@@ -32,6 +32,8 @@ class Trade_BTC_test(models.Model):
     btc = models.FloatField(blank=True, null=True)
     eur = models.FloatField(blank=True, null=True)
     eur_to_btc = models.BooleanField(blank=True, null=True)
+# 0 - wait; 1 - attention; 2 - trade finished
+    delayTrade = models.IntegerField(default=0)
 
 class Total_Value(models.Model):
     time = models.DateTimeField(default=timezone.now)
@@ -44,3 +46,6 @@ class Total_Value_Test(Total_Value):
 class StopTrade(models.Model):
     time = models.DateTimeField(default=timezone.now)
     stop = models.BooleanField(default=True)
+
+class Counter(models.Model):
+    counter = models.IntegerField(default=0)

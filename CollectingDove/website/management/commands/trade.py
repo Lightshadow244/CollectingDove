@@ -2,18 +2,17 @@ from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime, timedelta
 from django.utils import timezone, dateformat
 import requests
-from website.models import Trade_BTC_small, Trade_BTC_medium, Trade_BTC_large, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade
+from website.models import Trade_BTC_small, Trade_BTC_medium, Trade_BTC_large, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade, Counter
 import random
 
 ################################################################################
 
 # default settings
-test = True
 deltaDays = 7
 compareDeltaRate = 0
 trades = {}
 mode = 0
-debug = True
+debug = 1
 debugText = ''
 #compareRate = None
 
@@ -26,49 +25,42 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        global test, deltaDays, trades, mode, compareDeltaRate, debugText
+        global deltaDays, trades, rates, mode, compareDeltaRate, debugText
         DBInit = False
         debugText = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
 
 
         if(options['mode'] == 1):
-            test = False
             deltaDays = 1
             trades = Trade_BTC_small.objects.order_by('time')
             mode = 1
             compareDeltaRate = 100.0
             debugText+='1,'
         elif(options['mode'] == 2):
-            test = False
             deltaDays = 7
             trades = Trade_BTC_medium.objects.order_by('time')
             mode = 2
             compareDeltaRate = 500.0
             debugText+='2,'
         elif(options['mode'] == 3):
-            test = False
             deltaDays = 14
             trades = Trade_BTC_large.objects.order_by('time')
             mode = 3
             compareDeltaRate = 1000.0
             debugText+='3,'
         elif(options['mode'] == 0):
-            test = True
             deltaDays = 1
-            trades = Trade_BTC_test.objects.order_by('time')
+            trades = Trade_BTC_test.objects.exclude(btc = None, eur = None).order_by('time')
+            #rates = Trade_BTC_test.objects.exlude(btc => 0, eur => 0).order_by('time')
+            rates = Trade_BTC_test.objects.order_by('time')
             mode = 0
             compareDeltaRate = 100.0
-<<<<<<< HEAD
-            print('Settings are: test on small')
-
-# check if trade is allowed or it is a test
-=======
             debugText+='0,'
->>>>>>> 523228141e1d043e6af3882cfd62ea3abacfe2f7
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
-            jsonValue = request_basic(self)
+            #jsonValue = request_basic(self)
             #jsonValue = request_random(self)
+            jsonValue = request_curve(self)
 
             if('status_code' not in jsonValue):
                 lastTrade = trades.last()
@@ -94,8 +86,11 @@ class Command(BaseCommand):
         else:
             print('Trade stopped')
 
-        if(debug):
+        if(debug == 1):
             print(debugText)
+        elif(debug == 0):
+            if(debugText.count(',') == 6):
+                print(debugText)
 
 ################################################################################
 
@@ -126,10 +121,24 @@ def request_random(self,):
     r = {}
     #r['time'] = dateformat.format(timezone.now(), 'Y-m-d H:m:s')
     r['time'] = dateformat.format(datetime.now(), 'Y-m-d H:m:s')
-    r['rate'] = '%.3f' % random.uniform(7500.5, 9000.5)
+    r['rate'] = '%.3f' % random.uniform(7500.5, 8500.5)
     #print(str(r['time']) + ' ' + str(r['rate']))
     return(r)
 
+################################################################################
+def request_curve(self,):
+    r = {}
+    curve=[8000,7900,7800,7900,7800,7700,7700,7800,7900,7800,7900,8000]
+    counter = Counter.objects.get(id=1)
+
+    r['time'] = dateformat.format(datetime.now(), 'Y-m-d H:m:s')
+    r['rate'] = curve[counter.counter]
+    if(counter.counter == 11):
+        counter.counter = 0
+    else:
+        counter.counter += 1
+    counter.save()
+    return(r)
 ################################################################################
 
 def reset_trade(self, reason, jsonValue):
@@ -163,7 +172,8 @@ def set_eur_to_btc(self, lastTrade):
 def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
     global debugText
     r = False
-    deltaRate = lastTrade.rate - float(rate)
+    deltaTradeRate = lastTrade.rate - float(rate)
+    deltaRate = rates.last().rate - float(rate)
     lastValue = Total_Value_Test.objects.order_by('time').last()
     debugText += str(lastTrade.rate) + ',' + str(rate) + ','
     #print('lastTradeRate ' + str(lastTrade.rate) + ' rate ' + str(rate) + ' deltaRate ' + str(deltaRate))
@@ -171,10 +181,8 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
     if(lastValue is not None):
         if(lastTrade.eur_to_btc):
             debugText += 'btcToEur,'
-            if(deltaRate < 0 and abs(deltaRate) > compareDeltaRate):
+            if(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate > 0):
                 if(mode == 0):
-                    #print('TRADE btc into eur')
-                    debugText += 'btcToEur,'
 
                     sellBtc = lastValue.btc
                     buyEur = sellBtc * float(rate)
@@ -189,12 +197,18 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                     r = True
                 else:
                     pass
+            elif(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate < 0):
+                Trade_BTC_test(rate=rate).save()
+            elif(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate > 0):
+                Trade_BTC_test(rate=rate, delayTrade=1).save()
+            elif(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate < 0):
+                Trade_BTC_test(rate=rate).save()
             else:
-                pass
+                Trade_BTC_test(rate=rate).save()
                 #print('btc to eur was not traded')
         else:
-            debugText += 'btcToEur,'
-            if(deltaRate > 0 and abs(deltaRate) > compareDeltaRate):
+            debugText += 'EurToBtc,'
+            if(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate < 0):
                 if(mode == 0):
                     #print('TRADE eur into btc')
 
@@ -212,8 +226,14 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                     r = True
                 else:
                     pass
+            elif(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate > 0):
+                Trade_BTC_test(rate=rate).save()
+            elif(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate > 0):
+                Trade_BTC_test(rate=rate, delayTrade=1).save()
+            elif(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate < 0):
+                Trade_BTC_test(rate=rate).save()
             else:
-                pass
+                Trade_BTC_test(rate=rate).save()
                 #print('eur to btc was not traded')
     else:
         print('No last Value in DB')
