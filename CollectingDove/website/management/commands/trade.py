@@ -1,9 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime, timedelta
 from django.utils import timezone, dateformat
-import requests
-from website.models import Trade_BTC_small, Trade_BTC_medium, Trade_BTC_large, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade, Counter
-import random
+import requests, random, json, time, hashlib, hmac
+from website.models import Trade_BTC_small, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade, Counter
 
 ################################################################################
 
@@ -15,6 +14,8 @@ mode = 0
 debug = 1
 debugText = ''
 #compareRate = None
+header = {}
+
 
 ################################################################################
 
@@ -29,38 +30,37 @@ class Command(BaseCommand):
         DBInit = False
         debugText = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
 
+        ########################################################################
+
+        with open('website/apikey.private') as json_file:
+            data = json.load(json_file)
+            apiKey = data['key']
+            apiSecret= data['secret']
+
+        ########################################################################
 
         if(options['mode'] == 1):
-            deltaDays = 1
-            trades = Trade_BTC_small.objects.order_by('time')
+            #deltaDays = 1
+            trades = Trade_BTC_small.objects.exclude(btc = None, eur = None).order_by('time')
+            rates = Trade_BTC_small.objects.order_by('time')
             mode = 1
-            compareDeltaRate = 100.0
+            #compareDeltaRate = 100.0
             debugText+='1,'
-        elif(options['mode'] == 2):
-            deltaDays = 7
-            trades = Trade_BTC_medium.objects.order_by('time')
-            mode = 2
-            compareDeltaRate = 500.0
-            debugText+='2,'
-        elif(options['mode'] == 3):
-            deltaDays = 14
-            trades = Trade_BTC_large.objects.order_by('time')
-            mode = 3
-            compareDeltaRate = 1000.0
-            debugText+='3,'
         elif(options['mode'] == 0):
-            deltaDays = 1
+            #deltaDays = 1
             trades = Trade_BTC_test.objects.exclude(btc = None, eur = None).order_by('time')
             #rates = Trade_BTC_test.objects.exlude(btc => 0, eur => 0).order_by('time')
             rates = Trade_BTC_test.objects.order_by('time')
             mode = 0
-            compareDeltaRate = 100.0
+            #compareDeltaRate = 100.0
             debugText+='0,'
+
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
             jsonValue = request_basic(self)
             #jsonValue = request_random(self)
             #jsonValue = request_curve(self)
+            #jsonValue = request_rate(self, apiKey, apiSecret)
 
             if('status_code' not in jsonValue):
                 lastTrade = trades.last()
@@ -139,6 +139,43 @@ def request_curve(self,):
         counter.counter += 1
     counter.save()
     return(r)
+
+################################################################################
+
+def request_rate(self, apiKey, apiSecret):
+    r = {'status_code': '1'}
+    getParameterJson = {'trading_pair' : 'btceur'}
+    getParameter = ''
+    postParameter = ''
+    nonce = str(int(time.time()))
+    http_method = 'GET'
+    uri = 'https://api.bitcoin.de/v4/btceur/rates'
+
+    for key in getParameterJson:
+        getParameter = getParameter + key + '=' + getParameterJson[key]
+
+    uri = uri + '?' + getParameter
+    md5Post = str(hashlib.md5(postParameter.encode()).hexdigest())
+
+    signatur = http_method + '#' + uri + '#' + apiKey + '#' + nonce + '#' + md5Post
+    hashedSignatur = hmac.new(apiSecret.encode(), signatur.encode(), hashlib.sha256)
+
+    header = {
+    'X-API-KEY':apiKey,
+    'X-API-NONCE':nonce,
+    'X-API-SIGNATURE':hashedSignatur.hexdigest()
+    }
+    #print(uri)
+    #print(header)
+
+    response = requests.get(uri, headers=header)
+    #print(response.json()['credits'])
+    if(response.status_code == 200):
+        r.clear()
+        r['rate'] = response.json()['rates']['rate_weighted']
+        r['time'] = dateformat.format(datetime.now(), 'Y-m-d H:m:s')
+    return(r)
+
 ################################################################################
 
 def reset_trade(self, reason, jsonValue):
