@@ -58,9 +58,9 @@ class Command(BaseCommand):
             debugText+='0,'
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
 
-            #jsonValue = request_basic(self)
+            jsonValue = request_basic(self)
             #jsonValue = request_random(self)
-            jsonValue = request_curve(self)
+            #jsonValue = request_curve(self)
 
             if('status_code' not in jsonValue):
                 lastTrade = trades.last()
@@ -128,12 +128,12 @@ def request_random(self,):
 ################################################################################
 def request_curve(self,):
     r = {}
-    curve=[8000,7900,7800,7900,7800,7700,7700,7800,7900,7800,7900,8000]
+    curve=[8000,7900,7800,7900,7800,7700,7700,7800,7900,7800,7900,8000,8000]
     counter = Counter.objects.get(id=1)
 
     r['time'] = dateformat.format(datetime.now(), 'Y-m-d H:m:s')
     r['rate'] = curve[counter.counter]
-    if(counter.counter == 11):
+    if(counter.counter == 12):
         counter.counter = 0
     else:
         counter.counter += 1
@@ -179,9 +179,12 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
     #print('lastTradeRate ' + str(lastTrade.rate) + ' rate ' + str(rate) + ' deltaRate ' + str(deltaRate))
 #eur_to_btc from lastTrade, do the other thing
     if(lastValue is not None):
+        #print(deltaTradeRate)
+        #print(deltaRate)
         if(lastTrade.eur_to_btc):
             debugText += 'btcToEur,'
-            if(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate > 0):
+            if(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate >= 0):
+                print('1')
                 if(mode == 0):
 
                     sellBtc = lastValue.btc
@@ -197,18 +200,23 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                     r = True
                 else:
                     pass
-            elif(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate < 0):
+            elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
+                print('2')
                 Trade_BTC_test(rate=rate).save()
-            elif(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate > 0):
+            elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate >= 0):
+                print('3')
                 Trade_BTC_test(rate=rate, delayTrade=1).save()
-            elif(deltaTradeRate < 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate < 0):
+            elif(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate < 0):
+                print('4')
                 Trade_BTC_test(rate=rate).save()
             else:
+                print('5')
                 Trade_BTC_test(rate=rate).save()
                 #print('btc to eur was not traded')
         else:
             debugText += 'EurToBtc,'
-            if(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate < 0):
+            if(deltaTradeRate > 0 and rates.last().delayTrade == 1 and deltaRate <= 0):
+                print('1')
                 if(mode == 0):
                     #print('TRADE eur into btc')
 
@@ -226,13 +234,17 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                     r = True
                 else:
                     pass
-            elif(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate > 0):
+            elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
+                print('2')
                 Trade_BTC_test(rate=rate).save()
-            elif(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 0 and deltaRate > 0):
+            elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate <= 0):
+                print('3')
                 Trade_BTC_test(rate=rate, delayTrade=1).save()
-            elif(deltaTradeRate > 0 and abs(deltaTradeRate) > compareDeltaRate and rates.last().delayTrade == 1 and deltaRate < 0):
+            elif(deltaTradeRate > 0 and rates.last().delayTrade == 1 and deltaRate > 0):
+                print('4')
                 Trade_BTC_test(rate=rate).save()
             else:
+                print('5')
                 Trade_BTC_test(rate=rate).save()
                 #print('eur to btc was not traded')
     else:
