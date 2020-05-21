@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone, dateformat
 import requests, random, json, time, hashlib, hmac
 from website.models import Trade_BTC_small, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade, Counter
+from os import path
 
 ################################################################################
 
@@ -31,11 +32,11 @@ class Command(BaseCommand):
         debugText = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
 
         ########################################################################
-
-        with open('website/apikey.private') as json_file:
-            data = json.load(json_file)
-            apiKey = data['key']
-            apiSecret= data['secret']
+        if(path.exists('website/apikey.private')):
+            with open('website/apikey.private') as json_file:
+                data = json.load(json_file)
+                apiKey = data['key']
+                apiSecret= data['secret']
 
         ########################################################################
 
