@@ -34,7 +34,6 @@ class Command(BaseCommand):
 
         ########################################################################
         if(path.exists(path.join(BASE_DIR, 'website/apikey.private'),)):
-            #with open('website/apikey.private') as json_file:
             with open(path.join(BASE_DIR, 'website/apikey.private')) as json_file:
                 api = json.load(json_file)
                 #api.Key = data['key']
@@ -227,7 +226,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode, api):
         if(lastTrade.eur_to_btc):
             debugText += 'btcToEur,'
 
-            if(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate >= 0):
+            if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
             #if(True):
                 debugText += '1, '
 
@@ -271,7 +270,7 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode, api):
                 #print('btc to eur was not traded')
         else:
             debugText += 'EurToBtc,'
-            if(deltaTradeRate > 0 and rates.last().delayTrade == 1 and deltaRate <= 0):
+            if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
             #if(True):
                 order = findOrder(self, lastTrade, lastValue, api)
                 debugText += '1, '
