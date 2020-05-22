@@ -35,6 +35,7 @@ class Command(BaseCommand):
         ########################################################################
         if(path.exists(path.join(BASE_DIR, 'website/apikey.private'),)):
             with open(path.exists(path.join(BASE_DIR, 'website/apikey.private'),)) as json_file:
+                print(json_file)
                 api = json.load(json_file)
                 #api.Key = data['key']
                 #api.Secret= data['secret']
