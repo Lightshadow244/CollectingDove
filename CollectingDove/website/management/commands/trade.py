@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime, timedelta
 from django.utils import timezone, dateformat
-import requests, random, json, time, hashlib, hmac
+import requests, random, json, time, hashlib, hmac, time
 from website.models import Trade_BTC_small, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade, Counter
 from os import path
 
@@ -34,9 +34,9 @@ class Command(BaseCommand):
         ########################################################################
         if(path.exists('website/apikey.private')):
             with open('website/apikey.private') as json_file:
-                data = json.load(json_file)
-                apiKey = data['key']
-                apiSecret= data['secret']
+                api = json.load(json_file)
+                #api.Key = data['key']
+                #api.Secret= data['secret']
 
         ########################################################################
 
@@ -61,7 +61,7 @@ class Command(BaseCommand):
             jsonValue = request_basic(self)
             #jsonValue = request_random(self)
             #jsonValue = request_curve(self)
-            #jsonValue = request_rate(self, apiKey, apiSecret)
+            #jsonValue = request_rate(self, api['key'], api['secret'])
 
             if('status_code' not in jsonValue):
                 lastTrade = trades.last()
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                         #print('eur_to_btc: ' + str(lastTrade.eur_to_btc))
 
 # check if trade should be initiated
-                    if(TradeEurBtcTest(self, lastTrade, jsonValue['rate'], compareDeltaRate, mode)):
+                    if(TradeEurBtcTest(self, lastTrade, jsonValue['rate'], compareDeltaRate, mode, api)):
                         pass
             else:
                 print('status_code ' + jsonValue['status_code'])
@@ -207,7 +207,9 @@ def set_eur_to_btc(self, lastTrade):
     else:
         print('No last Value in DB')
 
-def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
+################################################################################
+
+def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode, api):
     global debugText
     r = False
     deltaTradeRate = lastTrade.rate - float(rate)
@@ -219,19 +221,33 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
     if(lastValue is not None):
         #print(deltaTradeRate)
         #print(deltaRate)
+
         if(lastTrade.eur_to_btc):
             debugText += 'btcToEur,'
-            if(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate >= 0):
-                print('1')
-                if(mode == 0):
 
-                    sellBtc = lastValue.btc
-                    buyEur = sellBtc * float(rate)
+            if(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate >= 0):
+            #if(True):
+                debugText += '1, '
+
+                order = findOrder(self, lastTrade, lastValue, api)
+
+                if(order != '0'):
+                    if(float(order['max_amount_currency_to_trade']) > lastValue.btc):
+                        sellBtc = lastValue.btc
+                        buyEur = sellBtc * float(order['price'])
+                    else:
+                        buyEur = float(order['max_volume_currency_to_pay'])
+                        sellBtc = buyEur / float(order['price'])
+
+                    #orderId = findOrder(self, lastTrade.eur_to_btc, sellBtc, rate)
 
                     #print('sellBtc ' + str(sellBtc) + ' buyEur ' + str(buyEur))
                     debugText += str(sellBtc) + 'btc,' + str(buyEur) + 'eur,'
 
-                    newValue = Total_Value_Test(eur=buyEur, btc=0)
+                    newValue = Total_Value_Test(eur=lastValue.eur + buyEur, btc=lastValue.btc-sellBtc)
+                    print('new Value')
+                    print(newValue.eur)
+                    print(newValue.btc)
                     newValue.save()
                     newTrade = Trade_BTC_test(rate=rate,eur=buyEur,btc=sellBtc*-1, eur_to_btc=False)
                     newTrade.save()
@@ -239,33 +255,47 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                 else:
                     pass
             elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
-                print('2')
+                debugText += '2, '
                 Trade_BTC_test(rate=rate).save()
             elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate >= 0):
-                print('3')
+                debugText += '3, '
                 Trade_BTC_test(rate=rate, delayTrade=1).save()
             elif(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate < 0):
-                print('4')
+                debugText += '4, '
                 Trade_BTC_test(rate=rate).save()
             else:
-                print('5')
+                debugText += '5, '
                 Trade_BTC_test(rate=rate).save()
                 #print('btc to eur was not traded')
         else:
             debugText += 'EurToBtc,'
             if(deltaTradeRate > 0 and rates.last().delayTrade == 1 and deltaRate <= 0):
-                print('1')
-                if(mode == 0):
+            #if(True):
+                order = findOrder(self, lastTrade, lastValue, api)
+                debugText += '1, '
+                if(order != '0'):
                     #print('TRADE eur into btc')
 
+                    #print(order['max_volume_currency_to_pay'])
+                    #print(lastValue.eur)
 
-                    sellEur = lastValue.eur
-                    buyBtc = sellEur / float(rate)
+                    if(float(order['max_volume_currency_to_pay']) > lastValue.eur):
+                        sellEur = lastValue.eur
+                        buyBtc = sellEur / float(order['price'])
+                    else:
+                        buyBtc = float(order['max_amount_currency_to_trade'])
+                        sellEur = buyBtc * float(order['price'])
+
+
+                    #orderId = findOrder(self, lastTrade.eur_to_btc, sellEur, rate)
 
                     #print(str(sellEur) + ' ' + str(buyBtc))
                     debugText += str(sellEur) + 'eur,' + str(buyBtc) + 'btc,'
 
-                    newValue = Total_Value_Test(eur=0, btc=buyBtc)
+                    newValue = Total_Value_Test(eur=lastValue.eur - sellEur, btc=lastValue.btc + buyBtc)
+                    print('new Value')
+                    print(newValue.eur)
+                    print(newValue.btc)
                     newValue.save()
                     newTrade = Trade_BTC_test(rate=rate,eur=sellEur*-1,btc=buyBtc, eur_to_btc=True)
                     newTrade.save()
@@ -273,18 +303,115 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode):
                 else:
                     pass
             elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
-                print('2')
+                debugText += '2, '
                 Trade_BTC_test(rate=rate).save()
             elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate <= 0):
-                print('3')
+                debugText += '3, '
                 Trade_BTC_test(rate=rate, delayTrade=1).save()
             elif(deltaTradeRate > 0 and rates.last().delayTrade == 1 and deltaRate > 0):
-                print('4')
+                debugText += '4, '
                 Trade_BTC_test(rate=rate).save()
             else:
-                print('5')
+                debugText += '5, '
                 Trade_BTC_test(rate=rate).save()
                 #print('eur to btc was not traded')
     else:
         print('No last Value in DB')
+    return(r)
+
+################################################################################
+
+def findOrder(self, lastTrade, lastValue, api):
+
+    global debugText
+
+    r = '0'
+    counter = 0
+    while(r == '0'):
+        getParameterJson = {'order_requirements_fullfilled': str(1)}
+        print(lastTrade.eur_to_btc)
+        if(lastTrade.eur_to_btc):
+            getParameterJson['type'] = 'sell'
+        else:
+            getParameterJson['type'] = 'buy'
+        getParameter = ''
+        postParameter = ''
+        nonce = str(int(time.time()))
+        http_method = 'GET'
+        uri = 'https://api.bitcoin.de/v4/btceur/orderbook'
+
+        #for key in getParameterJson:
+        #    getParameter = getParameter + key + '=' + getParameterJson[key] + '&'
+
+        for i, (k,v) in enumerate(getParameterJson.items()):
+            if(i == 0):
+                getParameter = k + '=' + v
+            else:
+                getParameter = getParameter + '&' + k + '=' + v
+
+        uri = uri + '?' + getParameter
+        #print(uri)
+        md5Post = str(hashlib.md5(postParameter.encode()).hexdigest())
+
+        signatur = http_method + '#' + uri + '#' + api['key'] + '#' + nonce + '#' + md5Post
+        hashedSignatur = hmac.new(api['secret'].encode(), signatur.encode(), hashlib.sha256)
+
+        header = {
+        'X-API-KEY':api['key'],
+        'X-API-NONCE':nonce,
+        'X-API-SIGNATURE':hashedSignatur.hexdigest()
+        }
+
+        response = requests.get(uri, headers=header)
+
+        if(response.status_code == 200):
+            data = response.json()['orders']
+            #data = []
+
+            #data = [
+            #{"type":"sell","order_id":"TBQTBM1","price":9400,"max_amount_currency_to_trade":"0.85000000"},
+            #{"type":"sell","order_id":"TBQTBM2","price":2400,"max_amount_currency_to_trade":"2.85000000"},
+            #{"type":"sell","order_id":"TBQTBM3","price":9400,"max_amount_currency_to_trade":"1.85000000"},
+            #{"type":"sell","order_id":"TBQTBM4","price":8400,"max_amount_currency_to_trade":"1.95000000"},
+            #{"type":"sell","order_id":"TBQTBM5","price":8900,"max_amount_currency_to_trade":"1.05000000"}
+            #]
+            goodTrades = []
+            if(lastTrade.eur_to_btc):
+                #print(data)
+                for trade in data:
+                    #print(trade['max_amount_currency_to_trade'])
+                    #print(lastValue.btc/2)
+                    if(float(trade['max_amount_currency_to_trade']) >= lastValue.btc/2):
+                        goodTrades.append(trade)
+
+                if(len(goodTrades) == 0 and counter < 3):
+                    #print('wait 3 seconds')
+                    counter += 1
+                    time.sleep(3)
+                elif(len(goodTrades) != 0):
+                    goodTrades = sorted(goodTrades, key = lambda i: i['price'])
+                    r = goodTrades[-1]
+                else:
+                    debugText += 'noOrderFound, '
+                    break
+                #print(goodTrades[-1]['order_id'])
+
+            else:
+                #print(data)
+
+                for trade in data:
+                    if(float(trade['max_volume_currency_to_pay']) >= lastValue.eur/2):
+                        goodTrades.append(trade)
+
+                if(len(goodTrades) == 0 and counter < 1):
+                    #print('wait 3 seconds')
+                    counter += 1
+                    time.sleep(3)
+                elif(len(goodTrades) != 0):
+                    goodTrades = sorted(goodTrades, key = lambda i: i['price'])
+                    r = goodTrades[0]
+                else:
+                    debugText += 'noOrderFound, '
+                    break
+
     return(r)
