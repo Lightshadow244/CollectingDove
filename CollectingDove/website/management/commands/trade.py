@@ -4,6 +4,7 @@ from django.utils import timezone, dateformat
 import requests, random, json, time, hashlib, hmac, time
 from website.models import Trade_BTC_small, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade, Counter
 from os import path
+from CollectingDove.settings import BASE_DIR
 
 ################################################################################
 
@@ -32,7 +33,7 @@ class Command(BaseCommand):
         debugText = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
 
         ########################################################################
-        if(path.exists('website/apikey.private')):
+        if(path.exists(path.join(BASE_DIR, 'website/apikey.private'),)):
             with open('website/apikey.private') as json_file:
                 api = json.load(json_file)
                 #api.Key = data['key']
@@ -245,9 +246,9 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode, api):
                     debugText += str(sellBtc) + 'btc,' + str(buyEur) + 'eur,'
 
                     newValue = Total_Value_Test(eur=lastValue.eur + buyEur, btc=lastValue.btc-sellBtc)
-                    print('new Value')
-                    print(newValue.eur)
-                    print(newValue.btc)
+                    #print('new Value')
+                    #print(newValue.eur)
+                    #print(newValue.btc)
                     newValue.save()
                     newTrade = Trade_BTC_test(rate=rate,eur=buyEur,btc=sellBtc*-1, eur_to_btc=False)
                     newTrade.save()
@@ -293,9 +294,9 @@ def TradeEurBtcTest(self, lastTrade, rate, compareDeltaRate, mode, api):
                     debugText += str(sellEur) + 'eur,' + str(buyBtc) + 'btc,'
 
                     newValue = Total_Value_Test(eur=lastValue.eur - sellEur, btc=lastValue.btc + buyBtc)
-                    print('new Value')
-                    print(newValue.eur)
-                    print(newValue.btc)
+                    #print('new Value')
+                    #print(newValue.eur)
+                    #print(newValue.btc)
                     newValue.save()
                     newTrade = Trade_BTC_test(rate=rate,eur=sellEur*-1,btc=buyBtc, eur_to_btc=True)
                     newTrade.save()
@@ -329,7 +330,7 @@ def findOrder(self, lastTrade, lastValue, api):
     counter = 0
     while(r == '0'):
         getParameterJson = {'order_requirements_fullfilled': str(1)}
-        print(lastTrade.eur_to_btc)
+        #print(lastTrade.eur_to_btc)
         if(lastTrade.eur_to_btc):
             getParameterJson['type'] = 'sell'
         else:
