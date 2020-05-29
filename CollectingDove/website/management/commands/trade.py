@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime, timedelta
 from django.utils import timezone, dateformat
-import requests, random, json, time, hashlib, hmac, time
+import requests, random, json, time, hashlib, hmac, time, collections
 from website.models import Trade_BTC_small, Trade_BTC_test, Total_Value, Total_Value_Test, StopTrade, Counter
 from os import path
 from CollectingDove.settings import BASE_DIR
@@ -136,7 +136,7 @@ def request_curve(self,):
 
     r['time'] = dateformat.format(datetime.now(), 'Y-m-d H:m:s')
     r['rate'] = curve[counter.counter]
-    if(counter.counter == 12):
+    if(counter.counter == len(curve) - 1):
         counter.counter = 0
     else:
         counter.counter += 1
@@ -313,24 +313,30 @@ def findOrder(self, lastTrade, api):
     #{"type":"sell","order_id":"TBQTBM5","price":8900,"max_amount_currency_to_trade":"1.05000000","max_volume_currency_to_pay":9345,"id":4}
     #]
 
+    #data = [
+    #{"type":"sell","order_id":"TBQTBM1","price":str(request_curve(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
+    #"max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
+    #]
+
+
     if(response.status_code == 200):
         data = response.json()['orders']
 
+    #print(data)
     r = sorted(data, key = lambda i: i['price'])
 
     return(r)
 ################################################################################
 def initTrade(self, lastTrade, lastValue, orders, api):
-    print('initiate trade')
-    print('lastValue btc ' + str(lastValue.btc))
-    print('lastValue eur ' + str(lastValue.eur))
+    #print('initiate trade')
+    #print('lastValue btc ' + str(lastValue.btc))
+    #print('lastValue eur ' + str(lastValue.eur))
     tradeList = []
     if(lastTrade.eur_to_btc):
         counter = -1
-        while(float(lastValue.btc) > 0.1 and abs(counter) <= len(orders)):
+        while(float(lastValue.btc) > 0.05 and abs(counter) <= len(orders)):
             trade = {}
             order = orders[counter]
-
             if(float(order['min_amount_currency_to_trade']) <= lastValue.btc):
                 if(float(order['max_amount_currency_to_trade']) > lastValue.btc):
                     sellBtc = lastValue.btc
@@ -352,7 +358,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
             #print(lastValue.btc)
     else:
         counter = 0
-        while(lastValue.eur > 0.1 * orders[0]['price'] and counter < len(orders)):
+        while(float(lastValue.eur) > 0.1 * float(orders[0]['price']) and counter < len(orders)):
             trade = {}
             order = orders[counter]
             if(float(order['min_volume_currency_to_pay']) <= lastValue.eur):
@@ -379,34 +385,37 @@ def initTrade(self, lastTrade, lastValue, orders, api):
 ###############################################################################
 
 def doTrade(self, tradeList, eur_to_btc, api):
-    #print(tradeList)
+    print(tradeList)
     r = []
-    getParameterJson = {}
-    getParameter = ''
+    postParameterJson = {}
     postParameter = ''
     nonce = str(int(time.time()))
-    http_method = 'Post'
+    http_method = 'POST'
 
 
     if(eur_to_btc):
         for trade in tradeList:
             returnTradeInfo = {}
             uri = 'https://api.bitcoin.de/v4/btceur/trades/'
-            getParameterJson['type'] = 'sell'
-            getParameterJson['amount_currency_to_trade'] = trade['btc']
+            postParameterJson['amount_currency_to_trade'] = trade['btc']
+            postParameterJson['type'] = 'sell'
+            postParameterJson = collections.OrderedDict(sorted(postParameterJson.items()))
+            #print(postParameterJson)
 
-            for i, (k,v) in enumerate(getParameterJson.items()):
+            for i, (k,v) in enumerate(postParameterJson.items()):
                 if(i == 0):
-                    getParameter = k + '=' + str(v)
+                    postParameter = k + '=' + str(v)
                 else:
-                    getParameter = getParameter + '&' + k + '=' + str(v)
+                    postParameter = postParameter + '&' + k + '=' + str(v)
+            #print(postParameter)
 
-            uri = uri + trade['order_id'] + '?' + getParameter
-            #print(uri)
+            uri = uri + trade['order_id']
+
 
             md5Post = str(hashlib.md5(postParameter.encode()).hexdigest())
 
             signatur = http_method + '#' + uri + '#' + api['key'] + '#' + nonce + '#' + md5Post
+            #print(signatur)
             hashedSignatur = hmac.new(api['secret'].encode(), signatur.encode(), hashlib.sha256)
 
             header = {
@@ -415,8 +424,12 @@ def doTrade(self, tradeList, eur_to_btc, api):
             'X-API-SIGNATURE':hashedSignatur.hexdigest()
             }
 
+            #print(header)
+
             if(mode == 1):
-                response = requests.get(uri, headers=header)
+                #print('dotrade')
+                response = requests.post(uri, headers=header, data=postParameterJson)
+                print()
             else:
                 response = requests.models.Response()
                 response.status_code = 400
@@ -424,7 +437,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
             if(response is not None):
                 returnTradeInfo['status_code'] = response.status_code
                 returnTradeInfo['order_id']  = trade['order_id']
-                returnTradeInfo['type']  = getParameterJson['type']
+                returnTradeInfo['type']  = postParameterJson['type']
                 returnTradeInfo['btc'] =    trade['btc']
                 returnTradeInfo['price'] = trade['price']
                 r.append(returnTradeInfo)
@@ -437,21 +450,25 @@ def doTrade(self, tradeList, eur_to_btc, api):
                     newValue = Total_Value_Test(eur=Total_Value_Test.objects.order_by('time').last().eur + trade['eur'],btc=Total_Value_Test.objects.order_by('time').last().btc - trade['btc'])
                     #print(newValue.btc)
                     newValue.save()
+                elif(response.status_code != 201):
+                    print(response.json())
     else:
         for trade in tradeList:
             returnTradeInfo = {}
             uri = 'https://api.bitcoin.de/v4/btceur/trades/'
-            getParameterJson['type'] = 'buy'
-            getParameterJson['amount_currency_to_trade'] = trade['btc']
+            postParameterJson['amount_currency_to_trade'] = trade['btc']
+            postParameterJson['type'] = 'buy'
+            postParameterJson = collections.OrderedDict(sorted(postParameterJson.items()))
 
-            for i, (k,v) in enumerate(getParameterJson.items()):
+
+
+            for i, (k,v) in enumerate(postParameterJson.items()):
                 if(i == 0):
-                    getParameter = k + '=' + str(v)
+                    postParameter = k + '=' + str(v)
                 else:
-                    getParameter = getParameter + '&' + k + '=' + str(v)
+                    postParameter = postParameter + '&' + k + '=' + str(v)
 
-            uri = uri + str(trade['order_id']) + '?' + getParameter
-            #print(uri)
+            uri = uri + str(trade['order_id'])
 
             md5Post = str(hashlib.md5(postParameter.encode()).hexdigest())
 
@@ -465,7 +482,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
             }
 
             if(mode == 1):
-                response = requests.get(uri, headers=header)
+                response = requests.post(uri, headers=header, data=postParameterJson)
             else:
                 response = requests.models.Response()
                 response.status_code = 400
@@ -473,7 +490,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
             if(response is not None):
                 returnTradeInfo['status_code'] = response.status_code
                 returnTradeInfo['order_id']  = trade['order_id']
-                returnTradeInfo['type']  = getParameterJson['type']
+                returnTradeInfo['type']  = postParameterJson['type']
                 returnTradeInfo['btc'] =    trade['btc']
                 returnTradeInfo['price'] = trade['price']
                 r.append(returnTradeInfo)
@@ -486,6 +503,8 @@ def doTrade(self, tradeList, eur_to_btc, api):
                     newValue = Total_Value_Test(eur=Total_Value_Test.objects.order_by('time').last().eur - trade['eur'],btc=Total_Value_Test.objects.order_by('time').last().btc + trade['btc'])
                     #print(newValue.eur)
                     newValue.save()
+                elif(resonse.status_code != 201):
+                    print(response.json())
     #print(r)
     return(r)
 
@@ -515,10 +534,10 @@ def getLastFidorReservation(self, api):
         data = response.json()['data']
         if('fidor_reservation' in data):
             #print(response.json()['data'])
-            r.eur = data['fidor_reservation']['available_amount']
+            r.eur = float(data['fidor_reservation']['available_amount'])
         else:
             r.eur = -1
-        r.btc = data['balances']['btc']['available_amount']
+        r.btc = float(data['balances']['btc']['available_amount'])
 
         if(mode == 0):
             r.eur = Total_Value_Test.objects.order_by('time').last().eur
