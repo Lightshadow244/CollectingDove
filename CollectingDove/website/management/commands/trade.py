@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 set_eur_to_btc(self,lastTrade, lastValue)
             elif(lastValue is None):
                 debugText += 'noValue'
-            elif(lastValue.eur == -1 and lastTrade.eur_to_btc == False):
+            elif(lastValue.eur == -1):
                 debugText += 'noFidorReservation,'
             else:
                 #print(lastTrade.eur_to_btc)
@@ -334,7 +334,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
     tradeList = []
     if(lastTrade.eur_to_btc):
         counter = -1
-        while(float(lastValue.btc) > 0.05 and abs(counter) <= len(orders)):
+        while(abs(counter) <= len(orders)):
             trade = {}
             order = orders[counter]
             if(float(order['min_amount_currency_to_trade']) <= lastValue.btc):
@@ -358,7 +358,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
             #print(lastValue.btc)
     else:
         counter = 0
-        while(float(lastValue.eur) > 0.1 * float(orders[0]['price']) and counter < len(orders)):
+        while(counter < len(orders)):
             trade = {}
             order = orders[counter]
             if(float(order['min_volume_currency_to_pay']) <= lastValue.eur):
@@ -376,8 +376,8 @@ def initTrade(self, lastTrade, lastValue, orders, api):
                 trade['btc'] = buyBtc
                 trade['eur'] = sellEur
                 tradeList.append(trade)
-            else:
-                print('zu wenig geld')
+            #else:
+            #    print('zu wenig geld')
 
             counter = counter + 1
     return(tradeList)
@@ -441,9 +441,11 @@ def doTrade(self, tradeList, eur_to_btc, api):
                 returnTradeInfo['btc'] =    trade['btc']
                 returnTradeInfo['price'] = trade['price']
                 r.append(returnTradeInfo)
-                if(response.status_code == 201):
+                if(response.status_code == 201 and mode == 1):
                     newTrade = Trade_BTC_small(rate=trade['price'],eur=trade['eur'],btc=trade['btc']  * -1, eur_to_btc=False)
                     newTrade.save()
+                    newValue = Total_Value_small(eur=Total_Value_small.objects.order_by('time').last().eur + trade['eur'],btc=Total_Value_small.objects.order_by('time').last().btc - trade['btc'])
+                    newValue.save()
                 elif(mode == 0):
                     newTrade = Trade_BTC_test(rate=trade['price'],eur=trade['eur'],btc=trade['btc']  * -1, eur_to_btc=False)
                     newTrade.save()
@@ -497,6 +499,8 @@ def doTrade(self, tradeList, eur_to_btc, api):
                 if(response.status_code == 201):
                     newTrade = Trade_BTC_small(rate=trade['price'],eur=trade['eur'] * -1,btc=trade['btc'], eur_to_btc=True)
                     newTrade.save()
+                    newValue = Total_Value_small(eur=Total_Value_small.objects.order_by('time').last().eur - trade['eur'],btc=Total_Value_small.objects.order_by('time').last().btc + trade['btc'])
+                    newValue.save()
                 elif(mode == 0):
                     newTrade = Trade_BTC_test(rate=trade['price'],eur=trade['eur']  * -1,btc=trade['btc'], eur_to_btc=True)
                     newTrade.save()
@@ -542,6 +546,10 @@ def getLastFidorReservation(self, api):
         if(mode == 0):
             r.eur = Total_Value_Test.objects.order_by('time').last().eur
             r.btc = Total_Value_Test.objects.order_by('time').last().btc
+        elif(mode == 1):
+            if(Total_Value.objects.all() == [] and 'fidor_reservation' in data):
+                r.save()
+
 
     else:
         #r['status_code'] = response.status_code
