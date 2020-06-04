@@ -31,6 +31,7 @@ class Command(BaseCommand):
         global deltaDays, trades, rates, mode, compareDeltaRate, debugText
         DBInit = False
         debugText = timezone.localtime(timezone.now()).strftime("%Y-%m-%d %H:%M:%S")
+        debugText += ','
 
         ########################################################################
         api = {'key': 'aaa', 'secret': 'aaa'}
