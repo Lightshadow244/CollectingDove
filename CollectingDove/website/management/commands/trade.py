@@ -319,7 +319,7 @@ def findOrder(self, lastTrade, api):
     'X-API-SIGNATURE':hashedSignatur.hexdigest()
     }
 
-    #response = requests.get(uri, headers=header)
+    response = requests.get(uri, headers=header)
 
     #data = [
     #{"type":"sell","order_id":"TBQTBM1","price":9400,"max_amount_currency_to_trade":"0.85000000","max_volume_currency_to_pay":7990,"id":0},
@@ -329,14 +329,14 @@ def findOrder(self, lastTrade, api):
     #{"type":"sell","order_id":"TBQTBM5","price":8900,"max_amount_currency_to_trade":"1.05000000","max_volume_currency_to_pay":9345,"id":4}
     #]
 
-    data = [
-    {"type":"sell","order_id":"TBQTBM1","price":str(request_random(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
-    "max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
-    ]
+    #data = [
+    #{"type":"sell","order_id":"TBQTBM1","price":str(request_random(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
+    #"max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
+    #]
 
 
-    #if(response.status_code == 200):
-    #    data = response.json()['orders']
+    if(response.status_code == 200):
+        data = response.json()['orders']
 
     #print(data)
     r = sorted(data, key = lambda i: i['price'])
