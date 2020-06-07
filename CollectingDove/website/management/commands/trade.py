@@ -217,6 +217,12 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         deltaTradeRate = lastTrade.rate - float(rate)
         deltaRate = rates.last().rate - float(rate)
         debugText += str(lastTrade.rate) + ',' + str(rate) + ','
+        debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
+
+        if(mode == 0):
+            rate = Trade_BTC_test(rate=rate)
+        elif(mode == 1):
+            rate = Trade_BTC_small(rate=rate)
 
         if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
         #if(True):
@@ -224,16 +230,18 @@ def isTradeProfitable(self, lastTrade, orders, rates):
             r = True
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
             debugText += '2,'
-            Trade_BTC_test(rate=rate).save()
+            rate.save()
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate >= 0):
             debugText += '3,'
-            Trade_BTC_test(rate=rate, delayTrade=1).save()
+            #Trade_BTC_test(rate=rate, delayTrade=1).save()
+            rate.delayTrade = 1
+            rate.save()
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate < 0):
             debugText += '4,'
-            Trade_BTC_test(rate=rate).save()
+            rate.save()
         else:
             debugText += '5,'
-            Trade_BTC_test(rate=rate).save()
+            rate.save()
             #print('btc to eur was not traded')
     else:
         debugText += 'EurToBtc,'
@@ -243,22 +251,28 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         debugText += str(lastTrade.rate) + ',' + str(rate) + ','
         debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
+        if(mode == 0):
+            rate = Trade_BTC_test(rate=rate)
+        elif(mode == 1):
+            rate = Trade_BTC_small(rate=rate)
+
         if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
         #if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
             debugText += '2,'
-            Trade_BTC_test(rate=rate).save()
+            rate.save()
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate <= 0):
             debugText += '3,'
-            Trade_BTC_test(rate=rate, delayTrade=1).save()
+            rate.delayTrade = 1
+            rate.save()
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 1 and deltaRate > 0):
             debugText += '4,'
-            Trade_BTC_test(rate=rate).save()
+            rate.save()
         else:
             debugText += '5,'
-            Trade_BTC_test(rate=rate).save()
+            rate.save()
             #print('eur to btc was not traded')
     return(r)
 
@@ -305,7 +319,7 @@ def findOrder(self, lastTrade, api):
     'X-API-SIGNATURE':hashedSignatur.hexdigest()
     }
 
-    response = requests.get(uri, headers=header)
+    #response = requests.get(uri, headers=header)
 
     #data = [
     #{"type":"sell","order_id":"TBQTBM1","price":9400,"max_amount_currency_to_trade":"0.85000000","max_volume_currency_to_pay":7990,"id":0},
@@ -315,14 +329,14 @@ def findOrder(self, lastTrade, api):
     #{"type":"sell","order_id":"TBQTBM5","price":8900,"max_amount_currency_to_trade":"1.05000000","max_volume_currency_to_pay":9345,"id":4}
     #]
 
-    #data = [
-    #{"type":"sell","order_id":"TBQTBM1","price":str(request_curve(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
-    #"max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
-    #]
+    data = [
+    {"type":"sell","order_id":"TBQTBM1","price":str(request_random(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
+    "max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
+    ]
 
 
-    if(response.status_code == 200):
-        data = response.json()['orders']
+    #if(response.status_code == 200):
+    #    data = response.json()['orders']
 
     #print(data)
     r = sorted(data, key = lambda i: i['price'])
