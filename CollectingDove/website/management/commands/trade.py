@@ -241,6 +241,7 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         deltaTradeRate = lastTrade.rate - float(rate)
         deltaRate = rates.last().rate - float(rate)
         debugText += str(lastTrade.rate) + ',' + str(rate) + ','
+        debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
         if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
         #if(True):
