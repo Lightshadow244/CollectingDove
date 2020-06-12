@@ -368,7 +368,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
 
                 trade['price'] = order['price']
                 trade['order_id'] = order['order_id']
-                trade['btc'] = float("%.15f" % sellBtc)
+                trade['btc'] = float(str(sellBtc)[:15])
                 trade['eur'] = buyEur
                 tradeList.append(trade)
 
@@ -392,7 +392,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
 
                 trade['price'] = order['price']
                 trade['order_id'] = order['order_id']
-                trade['btc'] = float("%.15f" % buyBtc)
+                trade['btc'] = float(str(buyBtc)[:15])
                 trade['eur'] = sellEur
                 tradeList.append(trade)
             #else:
