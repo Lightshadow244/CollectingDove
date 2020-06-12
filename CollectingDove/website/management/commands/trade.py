@@ -224,8 +224,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
-        #if(True):
+        #if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
+        if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
@@ -256,8 +256,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
-        #if(True):
+        #if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
+        if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
@@ -401,7 +401,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
 ###############################################################################
 
 def doTrade(self, tradeList, eur_to_btc, api):
-    print(tradeList)
+    #print(tradeList)
     r = []
     postParameterJson = {}
     postParameter = ''
@@ -445,7 +445,6 @@ def doTrade(self, tradeList, eur_to_btc, api):
             if(mode == 1):
                 #print('dotrade')
                 response = requests.post(uri, headers=header, data=postParameterJson)
-                print()
             else:
                 response = requests.models.Response()
                 response.status_code = 400
