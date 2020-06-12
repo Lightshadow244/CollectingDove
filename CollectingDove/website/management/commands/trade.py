@@ -60,16 +60,19 @@ class Command(BaseCommand):
             debugText+='0,'
 
         #lastValue = Total_Value_Test.objects.order_by('time').last()
-        lastValue = getLastFidorReservation(self, api)
         lastTrade = trades.last()
+
+        if(lastTrade is None):
+            reset_trade(self, 'nothing in DB', orders[-1]['price'])
+        elif(lastTrade.eur_to_btc is None):
+            print('set eur_to_btc')
+            set_eur_to_btc(self,lastTrade, lastValue)
+
+        lastValue = getLastFidorReservation(self, api, lastTrade.eur_to_btc)
+
         orders = findOrder(self, lastTrade, api)
         if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
-            if(lastTrade is None):
-                reset_trade(self, 'nothing in DB', orders[-1]['price'])
-            elif(lastTrade.eur_to_btc is None):
-                print('set eur_to_btc')
-                set_eur_to_btc(self,lastTrade, lastValue)
-            elif(lastValue is None):
+            if(lastValue is None):
                 debugText += 'noValue'
             elif(lastValue.eur == -1):
                 debugText += 'noFidorReservation,'
@@ -224,8 +227,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        #if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
-        if(True):
+        if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
+        #if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
@@ -256,8 +259,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        #if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
-        if(True):
+        if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
+        #if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
@@ -365,7 +368,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
 
                 trade['price'] = order['price']
                 trade['order_id'] = order['order_id']
-                trade['btc'] = sellBtc
+                trade['btc'] = float("%.15f" % sellBtc)
                 trade['eur'] = buyEur
                 tradeList.append(trade)
 
@@ -389,7 +392,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
 
                 trade['price'] = order['price']
                 trade['order_id'] = order['order_id']
-                trade['btc'] = buyBtc
+                trade['btc'] = float("%.15f" % buyBtc)
                 trade['eur'] = sellEur
                 tradeList.append(trade)
             #else:
@@ -459,7 +462,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
                 if(response.status_code == 201 and mode == 1):
                     newTrade = Trade_BTC_small(rate=trade['price'],eur=trade['eur'],btc=trade['btc']  * -1, eur_to_btc=False)
                     newTrade.save()
-                    newValue = Total_Value_small(eur=Total_Value_small.objects.order_by('time').last().eur + trade['eur'],btc=Total_Value_small.objects.order_by('time').last().btc - trade['btc'])
+                    newValue = Total_Value(eur=Total_Value.objects.order_by('time').last().eur + trade['eur'],btc=Total_Value.objects.order_by('time').last().btc - trade['btc'])
                     newValue.save()
                 elif(mode == 0):
                     newTrade = Trade_BTC_test(rate=trade['price'],eur=trade['eur'],btc=trade['btc']  * -1, eur_to_btc=False)
@@ -514,7 +517,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
                 if(response.status_code == 201):
                     newTrade = Trade_BTC_small(rate=trade['price'],eur=trade['eur'] * -1,btc=trade['btc'], eur_to_btc=True)
                     newTrade.save()
-                    newValue = Total_Value_small(eur=Total_Value_small.objects.order_by('time').last().eur - trade['eur'],btc=Total_Value_small.objects.order_by('time').last().btc + trade['btc'])
+                    newValue = Total_Value(eur=Total_Value.objects.order_by('time').last().eur - trade['eur'],btc=Total_Value.objects.order_by('time').last().btc + trade['btc'])
                     newValue.save()
                 elif(mode == 0):
                     newTrade = Trade_BTC_test(rate=trade['price'],eur=trade['eur']  * -1,btc=trade['btc'], eur_to_btc=True)
@@ -527,7 +530,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
     #print(r)
     return(r)
 
-def getLastFidorReservation(self, api):
+def getLastFidorReservation(self, api, eur_to_btc):
     r = Total_Value_Test(0,0)
     getParameterJson = {}
     getParameter = ''
@@ -554,6 +557,8 @@ def getLastFidorReservation(self, api):
         if('fidor_reservation' in data):
             #print(response.json()['data'])
             r.eur = float(data['fidor_reservation']['available_amount'])
+        elif(eur_to_btc):
+            r.eur = 0
         else:
             r.eur = -1
         r.btc = float(data['balances']['btc']['available_amount'])
