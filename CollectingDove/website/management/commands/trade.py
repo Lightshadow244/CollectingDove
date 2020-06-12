@@ -234,7 +234,7 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
             debugText += '2,'
             rate.save()
-        elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate >= 0):
+        elif(deltaTradeRate < -100 and rates.last().delayTrade == 0 and deltaRate >= 0):
             debugText += '3,'
             #Trade_BTC_test(rate=rate, delayTrade=1).save()
             rate.delayTrade = 1
@@ -266,7 +266,7 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
             debugText += '2,'
             rate.save()
-        elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate <= 0):
+        elif(deltaTradeRate > 100 and rates.last().delayTrade == 0 and deltaRate <= 0):
             debugText += '3,'
             rate.delayTrade = 1
             rate.save()
