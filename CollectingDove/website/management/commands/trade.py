@@ -227,8 +227,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
-        #if(True):
+        #if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
+        if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
@@ -259,8 +259,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
-        #if(True):
+        #if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
+        if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
@@ -362,7 +362,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
                     buyEur = sellBtc * float(order['price'])
                 else:
                     buyEur = float(order['max_volume_currency_to_pay'])
-                    sellBtc = buyEur / float(order['price'])
+                    sellBtc = float(order['max_amount_currency_to_trade'])
 
                 lastValue.btc = lastValue.btc - sellBtc
 
@@ -386,7 +386,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
                     buyBtc = sellEur / float(order['price'])
                 else:
                     buyBtc = float(order['max_amount_currency_to_trade'])
-                    sellEur = buyBtc * float(order['price'])
+                    sellEur = float(order['max_volume_currency_to_pay'])
 
                 lastValue.eur = lastValue.eur - sellEur
 
