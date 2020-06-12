@@ -227,8 +227,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        #if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
-        if(True):
+        if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
+        #if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
@@ -259,8 +259,8 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         elif(mode == 1):
             rate = Trade_BTC_small(rate=rate)
 
-        #if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
-        if(True):
+        if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
+        #if(True):
             debugText += '1,'
             r = True
         elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
