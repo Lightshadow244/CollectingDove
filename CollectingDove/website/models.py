@@ -37,6 +37,7 @@ class Trade_BTC_test(models.Model):
     eur_to_btc = models.BooleanField(blank=True, null=True)
 # 0 - wait; 1 - attention; 2 - trade finished
     delayTrade = models.IntegerField(default=0)
+    highest_peak = models.FloatField(default=0.0)
 
 class Total_Value(models.Model):
     time = models.DateTimeField(default=timezone.now)

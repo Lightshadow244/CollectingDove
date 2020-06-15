@@ -213,70 +213,63 @@ def set_eur_to_btc(self, lastTrade, lastValue):
 def isTradeProfitable(self, lastTrade, orders, rates):
     global debugText
     r = False
+    lastRate = rates.last()
 #eur_to_btc from lastTrade, do the other thing
     if(lastTrade.eur_to_btc):
         debugText += 'btcToEur,'
         rate = orders[-1]['price']
         deltaTradeRate = lastTrade.rate - float(rate)
-        deltaRate = rates.last().rate - float(rate)
+        deltaRate = lastRate.rate - float(rate)
         debugText += str(lastTrade.rate) + ',' + str(rate) + ','
         #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
         if(mode == 0):
-            rate = Trade_BTC_test(rate=rate)
+            newRate = Trade_BTC_test(rate=rate)
         elif(mode == 1):
-            rate = Trade_BTC_small(rate=rate)
+            newRate = Trade_BTC_small(rate=rate)
 
-        if(deltaTradeRate < -100 and rates.last().delayTrade == 1 and deltaRate >= 0):
+        if(deltaTradeRate < -100 and deltaTradeRate > lastRate.highest_peak * 0.9):
         #if(True):
             debugText += '1,'
             r = True
-        elif(deltaTradeRate < 0 and rates.last().delayTrade == 0 and deltaRate < 0):
+        elif(deltaTradeRate < lastRate.highest_peak):
+            newRate.highest_peak = deltaTradeRate
+            newRate.save()
             debugText += '2,'
-            rate.save()
-        elif(deltaTradeRate < -100 and rates.last().delayTrade == 0 and deltaRate >= 0):
-            debugText += '3,'
-            #Trade_BTC_test(rate=rate, delayTrade=1).save()
-            rate.delayTrade = 1
-            rate.save()
-        elif(deltaTradeRate < 0 and rates.last().delayTrade == 1 and deltaRate < 0):
-            debugText += '4,'
-            rate.save()
         else:
-            debugText += '5,'
-            rate.save()
-            #print('btc to eur was not traded')
+            newRate.highest_peak = lastRate.highest_peak
+            newRate.save()
+            debugText += '3,'
     else:
         debugText += 'EurToBtc,'
         rate = orders[0]['price']
         deltaTradeRate = lastTrade.rate - float(rate)
-        deltaRate = rates.last().rate - float(rate)
+        deltaRate = lastRate.rate - float(rate)
         debugText += str(lastTrade.rate) + ',' + str(rate) + ','
         #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
         if(mode == 0):
-            rate = Trade_BTC_test(rate=rate)
+            newRate = Trade_BTC_test(rate=rate)
         elif(mode == 1):
-            rate = Trade_BTC_small(rate=rate)
+            newRate = Trade_BTC_small(rate=rate)
 
-        if(deltaTradeRate > 100 and rates.last().delayTrade == 1 and deltaRate <= 0 ):
+        if(deltaTradeRate > 100 and deltaTradeRate < lastRate.highest_peak * 0.9):
         #if(True):
             debugText += '1,'
             r = True
-        elif(deltaTradeRate > 0 and rates.last().delayTrade == 0 and deltaRate > 0):
+        elif(deltaTradeRate > lastRate.highest_peak):
+            newRate.highest_peak = deltaTradeRate
+            newRate.save()
             debugText += '2,'
-            rate.save()
-        elif(deltaTradeRate > 100 and rates.last().delayTrade == 0 and deltaRate <= 0):
-            debugText += '3,'
-            rate.delayTrade = 1
-            rate.save()
-        elif(deltaTradeRate > 0 and rates.last().delayTrade == 1 and deltaRate > 0):
-            debugText += '4,'
-            rate.save()
         else:
-            debugText += '5,'
-            rate.save()
+            newRate.highest_peak = lastRate.highest_peak
+            newRate.save()
+            debugText += '3,'
             #print('eur to btc was not traded')
+
+    print('peak=' + str(lastRate.highest_peak))
+    print('peak*0.9=' + str(lastRate.highest_peak * 0.9))
+    print('delta=' + str(deltaTradeRate))
     return(r)
 
 ################################################################################
@@ -321,10 +314,10 @@ def findOrder(self, lastTrade, api):
     'X-API-NONCE':nonce,
     'X-API-SIGNATURE':hashedSignatur.hexdigest()
     }
-    #productive!!!
-    #response = requests.get(uri, headers=header)
-    #if(response.status_code == 200):
-    #    data = response.json()['orders']
+    response = requests.get(uri, headers=header)
+    if(response is not None):
+        if(response.status_code == 200):
+            data = response.json()['orders']
 
     #data = [
     #{"type":"sell","order_id":"TBQTBM1","price":9400,"max_amount_currency_to_trade":"0.85000000","max_volume_currency_to_pay":7990,"id":0},
@@ -575,7 +568,7 @@ def getLastFidorReservation(self, api, eur_to_btc):
         if(mode == 0):
             r.eur = Total_Value_Test.objects.order_by('time').last().eur
             r.btc = Total_Value_Test.objects.order_by('time').last().btc
-            print(r.btc)
+        else:
         #print(response.status_code)
-        debugText += 'Connection to bitcoin failed,'
+            debugText += 'Connection to bitcoin failed,'
     return(r)
