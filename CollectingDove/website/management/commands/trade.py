@@ -61,46 +61,44 @@ class Command(BaseCommand):
 
         #lastValue = Total_Value_Test.objects.order_by('time').last()
         lastTrade = trades.last()
-
+        orders = findOrder(self, lastTrade, api)
+        lastValue = getLastFidorReservation(self, api, lastTrade.eur_to_btc)
         if(lastTrade is None):
             reset_trade(self, 'nothing in DB', orders[-1]['price'])
         elif(lastTrade.eur_to_btc is None):
             print('set eur_to_btc')
             set_eur_to_btc(self,lastTrade, lastValue)
-
-        lastValue = getLastFidorReservation(self, api, lastTrade.eur_to_btc)
-
-        orders = findOrder(self, lastTrade, api)
-        if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
-            if(lastValue is None):
-                debugText += 'noValue'
-            elif(lastValue.eur == -1):
-                debugText += 'noFidorReservation,'
-            else:
-                #print(lastTrade.eur_to_btc)
-                #print(orders[0])
-                #print(orders[-1])
-
-                if(isTradeProfitable(self, lastTrade, orders, rates)):
-                    tradeList = initTrade(self, lastTrade, lastValue, orders, api)
-                    #if(StopTrade.objects.order_by('time').last().stop == True and mode != 0):
-                    finishedTrades = doTrade(self, tradeList, lastTrade.eur_to_btc, api)
-
-                    for trade in finishedTrades:
-                        debugText += str(trade['status_code']) + ','
-                        debugText += str(trade['order_id']) + ','
-                        debugText += str(trade['btc']) + ','
-                        debugText += str(trade['price']) + ','
-                else:
-                    debugText += 'tradeNotProfitable'
         else:
-            print('Trade stopped')
+            if(StopTrade.objects.order_by('time').last().stop == False or mode == 0):
+                if(lastValue is None):
+                    debugText += 'noValue'
+                elif(lastValue.eur == -1):
+                    debugText += 'noFidorReservation,'
+                else:
+                    #print(lastTrade.eur_to_btc)
+                    #print(orders[0])
+                    #print(orders[-1])
 
-        if(debug == 1):
-            print(debugText)
-        elif(debug == 0):
-            if(debugText.count(',') == 6):
+                    if(isTradeProfitable(self, lastTrade, orders, rates)):
+                        tradeList = initTrade(self, lastTrade, lastValue, orders, api)
+                        #if(StopTrade.objects.order_by('time').last().stop == True and mode != 0):
+                        finishedTrades = doTrade(self, tradeList, lastTrade.eur_to_btc, api)
+
+                        for trade in finishedTrades:
+                            debugText += str(trade['status_code']) + ','
+                            debugText += str(trade['order_id']) + ','
+                            debugText += str(trade['btc']) + ','
+                            debugText += str(trade['price']) + ','
+                    else:
+                        debugText += 'tradeNotProfitable'
+            else:
+                print('Trade stopped')
+
+            if(debug == 1):
                 print(debugText)
+            elif(debug == 0):
+                if(debugText.count(',') == 6):
+                    print(debugText)
 
 ################################################################################
 
@@ -205,6 +203,8 @@ def set_eur_to_btc(self, lastTrade, lastValue):
             elif(lastValue.btc * lastTrade.rate > lastValue.eur):
                 lastTrade.eur_to_btc = True
             lastTrade.save()
+        else:
+            print('No last Value in DB')
     else:
         print('No last Value in DB')
 
@@ -220,7 +220,7 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         deltaTradeRate = lastTrade.rate - float(rate)
         deltaRate = rates.last().rate - float(rate)
         debugText += str(lastTrade.rate) + ',' + str(rate) + ','
-        debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
+        #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
         if(mode == 0):
             rate = Trade_BTC_test(rate=rate)
@@ -252,7 +252,7 @@ def isTradeProfitable(self, lastTrade, orders, rates):
         deltaTradeRate = lastTrade.rate - float(rate)
         deltaRate = rates.last().rate - float(rate)
         debugText += str(lastTrade.rate) + ',' + str(rate) + ','
-        debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
+        #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
         if(mode == 0):
             rate = Trade_BTC_test(rate=rate)
@@ -321,8 +321,10 @@ def findOrder(self, lastTrade, api):
     'X-API-NONCE':nonce,
     'X-API-SIGNATURE':hashedSignatur.hexdigest()
     }
-
-    response = requests.get(uri, headers=header)
+    #productive!!!
+    #response = requests.get(uri, headers=header)
+    #if(response.status_code == 200):
+    #    data = response.json()['orders']
 
     #data = [
     #{"type":"sell","order_id":"TBQTBM1","price":9400,"max_amount_currency_to_trade":"0.85000000","max_volume_currency_to_pay":7990,"id":0},
@@ -332,15 +334,10 @@ def findOrder(self, lastTrade, api):
     #{"type":"sell","order_id":"TBQTBM5","price":8900,"max_amount_currency_to_trade":"1.05000000","max_volume_currency_to_pay":9345,"id":4}
     #]
 
-    #data = [
-    #{"type":"sell","order_id":"TBQTBM1","price":str(request_random(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
-    #"max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
-    #]
-
-
-    if(response.status_code == 200):
-        data = response.json()['orders']
-
+    data = [
+    {"type":"sell","order_id":"TBQTBM1","price":str(request_random(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
+    "max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
+    ]
     #print(data)
     r = sorted(data, key = lambda i: i['price'])
 
@@ -531,6 +528,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
     return(r)
 
 def getLastFidorReservation(self, api, eur_to_btc):
+    global debugText
     r = Total_Value_Test(0,0)
     getParameterJson = {}
     getParameter = ''
@@ -566,6 +564,7 @@ def getLastFidorReservation(self, api, eur_to_btc):
         if(mode == 0):
             r.eur = Total_Value_Test.objects.order_by('time').last().eur
             r.btc = Total_Value_Test.objects.order_by('time').last().btc
+            print(r.btc)
         elif(mode == 1):
             if(Total_Value.objects.all() == [] and 'fidor_reservation' in data):
                 r.save()
@@ -573,5 +572,10 @@ def getLastFidorReservation(self, api, eur_to_btc):
 
     else:
         #r['status_code'] = response.status_code
-        print(response.status_code)
+        if(mode == 0):
+            r.eur = Total_Value_Test.objects.order_by('time').last().eur
+            r.btc = Total_Value_Test.objects.order_by('time').last().btc
+            print(r.btc)
+        #print(response.status_code)
+        debugText += 'Connection to bitcoin failed,'
     return(r)

@@ -18,6 +18,7 @@ class Trade_BTC(models.Model):
     eur_to_btc = models.BooleanField(blank=True, null=True)
 # 0 - wait; 1 - attention; 2 - trade finished
     delayTrade = models.IntegerField(default=0)
+    highest_peak = models.FloatField(default=0.0)
 
 class Trade_BTC_small(Trade_BTC):
     pass
