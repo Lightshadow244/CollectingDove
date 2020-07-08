@@ -126,7 +126,7 @@ def request_random(self,):
     r = {}
     #r['time'] = dateformat.format(timezone.now(), 'Y-m-d H:m:s')
     r['time'] = dateformat.format(datetime.now(), 'Y-m-d H:m:s')
-    r['rate'] = '%.3f' % random.uniform(7500.5, 8500.5)
+    r['rate'] = '%.3f' % random.uniform(8500.5, 9000.5)
     #print(str(r['time']) + ' ' + str(r['rate']))
     return(r)
 
@@ -327,10 +327,10 @@ def findOrder(self, lastTrade, api):
     #{"type":"sell","order_id":"TBQTBM5","price":8900,"max_amount_currency_to_trade":"1.05000000","max_volume_currency_to_pay":9345,"id":4}
     #]
 
-    data = [
-    {"type":"sell","order_id":"TBQTBM1","price":str(request_random(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
-    "max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
-    ]
+    #data = [
+    #{"type":"sell","order_id":"TBQTBM1","price":str(request_random(self,)['rate']),"max_amount_currency_to_trade":"0.85000000",
+    #"max_volume_currency_to_pay":'7990',"id":'0','min_volume_currency_to_pay':'1000','min_amount_currency_to_trade':'0.1'},
+    #]
     #print(data)
     r = sorted(data, key = lambda i: i['price'])
 
@@ -398,12 +398,12 @@ def doTrade(self, tradeList, eur_to_btc, api):
     r = []
     postParameterJson = {}
     postParameter = ''
-    nonce = str(int(time.time()))
     http_method = 'POST'
 
 
     if(eur_to_btc):
         for trade in tradeList:
+            nonce = str(int(time.time()))
             returnTradeInfo = {}
             uri = 'https://api.bitcoin.de/v4/btceur/trades/'
             postParameterJson['amount_currency_to_trade'] = trade['btc']
