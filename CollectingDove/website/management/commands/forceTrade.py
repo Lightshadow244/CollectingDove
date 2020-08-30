@@ -243,8 +243,6 @@ def doTrade(self, tradeList, eur_to_btc, api):
 #traderesponse
             #response = requests.post(uri, headers=header, data=postParameterJson)
             response = requests.models.Response()
-            response.status_code = 400
-            response._content = b'{ "key" : "a" }'
 
             if(response is not None):
                 returnTradeInfo['status_code'] = response.status_code
@@ -299,8 +297,6 @@ def doTrade(self, tradeList, eur_to_btc, api):
 #traderesponse
             #response = requests.post(uri, headers=header, data=postParameterJson)
             response = requests.models.Response()
-            response.status_code = 400
-            response._content = b'{ "key" : "a" }'
 
             if(response is not None):
                 returnTradeInfo['status_code'] = response.status_code
