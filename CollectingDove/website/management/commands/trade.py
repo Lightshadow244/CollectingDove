@@ -359,6 +359,7 @@ def initTrade(self, lastTrade, lastValue, orders, api):
                 trade['price'] = order['price']
                 trade['order_id'] = order['order_id']
                 trade['btc'] = float(str(sellBtc)[:10])
+                print(trade['btc'])
                 trade['eur'] = buyEur
                 tradeList.append(trade)
 
