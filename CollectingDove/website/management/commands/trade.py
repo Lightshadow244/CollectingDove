@@ -516,7 +516,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
                     newValue = Total_Value_Test(eur=Total_Value_Test.objects.order_by('time').last().eur - trade['eur'],btc=Total_Value_Test.objects.order_by('time').last().btc + trade['btc'])
                     #print(newValue.eur)
                     newValue.save()
-                elif(resonse.status_code != 201):
+                elif(response.status_code != 201):
                     print(response.json())
     #print(r)
     return(r)
