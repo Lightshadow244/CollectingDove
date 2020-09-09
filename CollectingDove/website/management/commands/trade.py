@@ -464,6 +464,7 @@ def doTrade(self, tradeList, eur_to_btc, api):
                     print(response.json())
     else:
         for trade in tradeList:
+            nonce = str(int(time.time()))
             returnTradeInfo = {}
             uri = 'https://api.bitcoin.de/v4/btceur/trades/'
             postParameterJson['amount_currency_to_trade'] = trade['btc']
