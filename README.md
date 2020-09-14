@@ -14,7 +14,7 @@ install rquirements(Dajngo, eyeD3,...)
 `pip install -r CollectionDove/requirements.txt`
 
 do some pyhton Magic  
-`python manage.py makemigration`  
+`python manage.py makemigrations`  
 `python manage.py migrate`
 
 start server  
