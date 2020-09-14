@@ -1,10 +1,11 @@
+from django.shortcuts import render
 from django.http import HttpResponse
 from website.models import Trade_BTC_test, StopTrade
 import csv
 
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+    return render(request, 'CollectingDove/index.html')
 
 def exportValue(request):
     response = HttpResponse(content_type='text/csv')
