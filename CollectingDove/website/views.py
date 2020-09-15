@@ -23,7 +23,7 @@ def index(request):
             label.append(t)
         else:
             label.append(None)
-    print(label);
+    print(label)
 
 
 

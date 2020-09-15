@@ -32,6 +32,11 @@ var myChart = new Chart(ctx, {
                     beginAtZero: true
                 }
             }]
+        },
+        elements: {
+          line: {
+            tension: 0
+          }
         }
     }
 });
