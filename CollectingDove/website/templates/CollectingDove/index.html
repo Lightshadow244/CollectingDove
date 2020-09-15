@@ -7,8 +7,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js"></script>
 
   </head>
-  <body>
-    <canvas id="myChart"></canvas>
+  <body class="h-100">
+    <div class="container-fluid">
+      <div class="row h-100 d-none" id="ContainerChart">
+        <div class="col-sm-8">
+          <canvas id="myChart"></canvas>
+        </div>
+        <div class="col-sm-4">
+          <canvas id="myChart"></canvas>
+        </div>
+      </div>
+      <div class="container" id="ContainerValue">
+        <table>
+          <tr id="RowMonth">
+            <td>test</td>
+          </tr>
+          <tr id="RowValue">
+          </tr>
+          <tr id="RowHighlight">
+          </tr>
+        </table>
+      </div>
+    </div>
     <script src="{% static 'website/index.js' %}"></script>
   </body>
 </html>
