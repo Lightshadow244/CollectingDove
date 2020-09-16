@@ -9,7 +9,7 @@
   </head>
   <body class="h-100">
     <div class="container-fluid">
-      <div class="row h-100 d-none" id="ContainerChart">
+      <div class="row h-100" id="ContainerChart">
         <div class="col-sm-8">
           <canvas id="myChart"></canvas>
         </div>
@@ -18,15 +18,21 @@
         </div>
       </div>
       <div class="container" id="ContainerValue">
-        <table>
-          <tr id="RowMonth">
-            <td>test</td>
-          </tr>
-          <tr id="RowValue">
-          </tr>
-          <tr id="RowHighlight">
-          </tr>
-        </table>
+        <div id="list_label">
+          {% if list_label %}
+          {{ list_label }}
+          {% endif %}
+        </div>
+        <div id="list_trades">
+          {% if list_trades %}
+          {{ list_trades }}
+          {% endif %}
+        </div>
+        <div id="list_rates">
+          {% if list_rates %}
+          {{ list_rates }}
+          {% endif %}
+        </div>
       </div>
     </div>
     <script src="{% static 'website/index.js' %}"></script>
