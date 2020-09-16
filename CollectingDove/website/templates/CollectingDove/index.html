@@ -18,11 +18,11 @@
         </div>
       </div>
       <div class="container" id="ContainerValue">
-        <div id="list_label">
-          {% if list_label %}
-          {{ list_label }}
-          {% endif %}
+        {% if list_label %}
+        <div id="list_label" text=>
+            {{ list_label }}
         </div>
+        {% endif %}
         <div id="list_trades">
           {% if list_trades %}
           {{ list_trades }}

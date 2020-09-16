@@ -53,3 +53,8 @@ class StopTrade(models.Model):
 
 class Counter(models.Model):
     counter = models.IntegerField(default=0)
+
+class Graph_RatesPerDay(models.Model):
+    time = models.DateTimeField(default=timezone.now, blank=False)
+    rate = models.FloatField(blank=False)
+    trades = models.TextField(blank=True)

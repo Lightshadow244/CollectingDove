@@ -20,7 +20,8 @@ def index(request):
 
     rates_2d = Trade_BTC.objects.filter(time__gte=last2d).order_by('time')
 
-    list_label = []
+    #list_label = []
+    list_label = ''
     list_trades = []
     list_rates = []
     t = 0
@@ -37,14 +38,15 @@ def index(request):
         # list_label
         if(rate.time.hour > t or (t == 23 and rate.time.hour == 0)):
             t = rate.time.hour
-            list_label.append(t)
+            #list_label.append(t)
+            list_label += str(t) + ','
         else:
-            list_label.append('')
+            list_label += '' + ','
     print(list_label)
-    print('###################')
-    print(list_rates)
-    print('###################')
-    print(list_trades)
+    #print('###################')
+    #print(list_rates)
+    #print('###################')
+    #print(list_trades)
 
 
 
