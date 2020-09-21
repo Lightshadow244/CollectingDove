@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from website.models import Trade_BTC_test, StopTrade, Trade_BTC
+from website.models import Trade_BTC_test, StopTrade, Trade_BTC, Graph_RatesPerDay
 from django.template import loader
 import csv
 from datetime import datetime, timezone, timedelta
@@ -15,33 +15,41 @@ def index(request):
 
     #letzten zwei Tage 12 DP in einer Stunde * 48 Stunden = 576 Datenpunkte
     #last2d = datetime.now() - timedelta(days=2)
-    last2d = datetime(2020,9,13,0,0,0)
+    last2d = datetime(2020,9,11,0,0,0)
     last2d = last2d.replace(tzinfo=timezone.utc)
 
-    rates_2d = Trade_BTC.objects.filter(time__gte=last2d).order_by('time')
+    rates_2d = Graph_RatesPerDay.objects.filter(time__gte=last2d).order_by('time')
 
     #list_label = []
     list_label = ''
     list_trades = []
-    list_rates = []
+    list_rates = ''
     t = 0
     for rate in rates_2d:
         # list_trades
-        if(rate.btc is None and rate.eur is None ):
-            list_trades.append(None)
-        else:
-            list_trades.append({'rate':rate.rate,'eur':rate.eur,'btc':rate.btc,'eur_to_btc':rate.eur_to_btc,'time':rate.time})
+        #if(rate.btc is None and rate.eur is None ):
+        #    list_trades.append(None)
+        #else:
+        #    list_trades.append({'rate':rate.rate,'eur':rate.eur,'btc':rate.btc,'eur_to_btc':rate.eur_to_btc,'time':rate.time})
 
         # list_rates
-        list_rates.append(rate.rate)
+        if(len(list_rates) == 0):
+            list_rates += str(rate.rate)
+        else:
+            list_rates += ',' + str(rate.rate)
+
 
         # list_label
-        if(rate.time.hour > t or (t == 23 and rate.time.hour == 0)):
-            t = rate.time.hour
+        #if(rate.time.hour > t or (t == 23 and rate.time.hour == 0)):
+        #    t = rate.time.hour
             #list_label.append(t)
-            list_label += str(t) + ','
+        #    list_label += str(t) + ','
+        #else:
+        #    list_label += '' + ','
+        if(len(list_label) == 0):
+            list_label += rate.time.strftime("%d.%m.%y")
         else:
-            list_label += '' + ','
+            list_label += ',' + rate.time.strftime("%d.%m.%y")
     print(list_label)
     #print('###################')
     #print(list_rates)

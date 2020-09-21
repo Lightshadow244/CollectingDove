@@ -18,19 +18,20 @@
         </div>
       </div>
       <div class="container" id="ContainerValue">
-        {% if list_label %}
+
         <div id="list_label" text=>
+          {% if list_label %}
             {{ list_label }}
+          {% endif %}
         </div>
-        {% endif %}
         <div id="list_trades">
           {% if list_trades %}
-          {{ list_trades }}
+            {{ list_trades }}
           {% endif %}
         </div>
         <div id="list_rates">
           {% if list_rates %}
-          {{ list_rates }}
+            {{ list_rates }}
           {% endif %}
         </div>
       </div>
