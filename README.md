@@ -1,5 +1,7 @@
 # CollectingDove
 What will the dove collect?
+
+An Environment to trade Bitcoins daily on Bitcoinn.de. A Cronjob execute the command "trade" under CollectingDove/website/management/commands/ every 5 minutes.
   
 # Installation
 install virtualenv  
