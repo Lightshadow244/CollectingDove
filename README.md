@@ -9,6 +9,10 @@ install virtualenv
 `virtualenv ENV`  
 `source /home/user/ENV/bin/activate` 
 
+
+install oathtool  
+`sudo apt install oathtool`
+
 update pip  
 `pip install --upgrade pip`
 
