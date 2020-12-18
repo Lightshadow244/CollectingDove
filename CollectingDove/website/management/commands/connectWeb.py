@@ -3,6 +3,8 @@ from twill.commands import *
 from os import path
 from CollectingDove.settings import BASE_DIR
 import json
+import subprocess
+import platform
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -13,7 +15,6 @@ class Command(BaseCommand):
                 loginData = json.load(json_file)
         else:
             print("no login file")
-        print(loginData)
 ###############################################################################
 #Bitcoin Login
 ###############################################################################
@@ -30,4 +31,6 @@ class Command(BaseCommand):
         fv("1", "username", loginData["bitcoin_login"])
         fv("1", "password", loginData["bitcoin_password"])
         submit("0")
+
+        password2 = subprocess.run("oathtool", "-b", "--totp", loginData["bitcoin_password2"])
         showforms()
