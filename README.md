@@ -6,9 +6,8 @@ An Environment to trade Bitcoins daily on Bitcoinn.de. A Cronjob execute the com
 # Installation
 install virtualenv  
 `apt-get install python-virtualenv`  
-`virtualenv ENV`  
+`virtualenv -p /usr/bin/python3 ENV`  
 `source /home/user/ENV/bin/activate` 
-
 
 install oathtool  
 `sudo apt install oathtool`
