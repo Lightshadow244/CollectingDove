@@ -133,3 +133,9 @@ migrations/
 
 # private
 *.private
+
+# tmp
+tmp/
+
+# visual studio code
+.vscode/
