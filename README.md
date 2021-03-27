@@ -24,3 +24,8 @@ do some pyhton Magic
 
 start server  
 `python ownmusicweb/manage.py runserver 0.0.0.0:8000`
+
+
+# Gammu
+`apt install gammu libgammu-dev`  
+`pip install python-gammu`
