@@ -2,22 +2,15 @@ from django.core.management.base import BaseCommand, CommandError
 from os import path
 from CollectingDove.settings import BASE_DIR
 import json, subprocess, sys, gammu, time
-#import subprocess
 from selenium import webdriver 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-#import sys
-#import gammu
-#imoprt time
 
-class Command(BaseCommand):
-    def add_arguments(self, parser):
-    # Positional arguments
-        parser.add_argument("value", type=int,nargs='?', default=100)
+class Reservation:
+    
+    status = False
 
-    def handle(self, *args, **options):
-        value = str(options["value"])
-
+    def reserve(self, value):
         loginData = {}
         if(path.exists(path.join(BASE_DIR, 'website/login.private'),)):
             with open(path.join(BASE_DIR, 'website/login.private')) as json_file:
@@ -156,15 +149,9 @@ class Command(BaseCommand):
             driver.save_screenshot("../tmp/error.png")
             sys.exit(0)
 
+        self.status = True
+
         driver.save_screenshot("../tmp/success.png")
         print("success")
 
         driver.quit()
-        
-
-
-#driver.execute_script("scroll(0, 250)")
-#driver.find_element_by_xpath("//label[@for='reservation_amount_custom']").click()
- #e.send_keys(Keys.TAB)
-            #for x in range(7):
-            #    e.send_keys(Keys.DOWN)
