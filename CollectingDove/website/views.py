@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from website.models import Trade_BTC_test, StopTrade, Trade_BTC, Graph_RatesPerDay
+from website.models import StopTrade, Trade_BTC, Graph_RatesPerDay
 from django.template import loader
 import csv
 from datetime import datetime, timezone, timedelta
@@ -69,7 +69,7 @@ def exportValue(request):
     writer = csv.writer(response)
     writer.writerow(['time', 'rate', 'eur', 'btc'])
 
-    for trade in Trade_BTC_test.objects.order_by('time'):
+    for trade in Trade_BTC.objects.order_by('time'):
         writer.writerow([trade.time, trade.rate, trade.eur, trade.btc])
 
     return response

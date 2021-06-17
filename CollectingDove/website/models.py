@@ -16,36 +16,13 @@ class Trade_BTC(models.Model):
     btc = models.FloatField(blank=True, null=True)
     eur = models.FloatField(blank=True, null=True)
     eur_to_btc = models.BooleanField(blank=True, null=True)
-# 0 - wait; 1 - attention; 2 - trade finished
-    delayTrade = models.IntegerField(default=0)
     highest_peak = models.FloatField(default=0.0)
-
-class Trade_BTC_small(Trade_BTC):
-    pass
-
-class Trade_BTC_medium(Trade_BTC):
-    pass
-
-class Trade_BTC_large(Trade_BTC):
-    pass
-
-class Trade_BTC_test(models.Model):
-    time = models.DateTimeField(default=timezone.now, blank=False)
-    rate = models.FloatField(blank=False)
-    btc = models.FloatField(blank=True, null=True)
-    eur = models.FloatField(blank=True, null=True)
-    eur_to_btc = models.BooleanField(blank=True, null=True)
-# 0 - wait; 1 - attention; 2 - trade finished
-    delayTrade = models.IntegerField(default=0)
-    highest_peak = models.FloatField(default=0.0)
+    internal_trade_id = models.IntegerField(blank=True, null=True)
 
 class Total_Value(models.Model):
     time = models.DateTimeField(default=timezone.now)
     btc = models.FloatField(blank=True, null=True)
     eur = models.FloatField(blank=True, null=True)
-
-class Total_Value_Test(Total_Value):
-    pass
 
 class StopTrade(models.Model):
     time = models.DateTimeField(default=timezone.now)
