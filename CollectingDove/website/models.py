@@ -35,3 +35,8 @@ class Graph_RatesPerDay(models.Model):
     time = models.DateTimeField(default=timezone.now, blank=False)
     rate = models.FloatField(blank=False)
     trades = models.TextField(blank=True)
+
+class Sms(models.Model):
+    time = models.DateTimeField(default=timezone.now, blank=False)
+    number = models.CharField(max_length=20)
+    text  = models.TextField(blank=True)

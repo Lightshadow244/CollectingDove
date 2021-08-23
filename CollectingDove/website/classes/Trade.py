@@ -99,11 +99,12 @@ class Trade:
             deltaTradeRate = self.lastTrade.rate - float(rate)
             deltaRate = self.lastRate.rate - float(rate)
             self.status += str(self.lastTrade.rate) + ',' + str(rate) + ','
+            profitValue = self.lastTrade.rate * 0.01
             #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
             newRate = Trade_BTC(rate=rate)
 
-            if(deltaTradeRate < -75 and deltaTradeRate > self.lastRate.highest_peak * 0.9):
+            if(deltaTradeRate < profitValue * -1 and deltaTradeRate > self.lastRate.highest_peak * 0.85):
             #if(True):
                 self.status += '1,'
                 r = True
@@ -121,11 +122,12 @@ class Trade:
             deltaTradeRate = self.lastTrade.rate - float(rate)
             deltaRate = self.lastRate.rate - float(rate)
             self.status += str(self.lastTrade.rate) + ',' + str(rate) + ','
+            profitValue = self.lastTrade.rate * 0.01
             #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
             newRate = Trade_BTC(rate=rate)
 
-            if(deltaTradeRate > 75 and deltaTradeRate < self.lastRate.highest_peak * 0.9):
+            if(deltaTradeRate > profitValue and deltaTradeRate < self.lastRate.highest_peak * 0.85):
             #if(True):
                 self.status += '1,'
                 r = True
@@ -140,9 +142,10 @@ class Trade:
 
         if(r == False):
             self.status += 'tradeNotProfitable'
-
+        
+        self.log('profitValue=' + str(profitValue))
         self.log('peak=' + str(self.lastRate.highest_peak))
-        self.log('peak*0.9=' + str(self.lastRate.highest_peak * 0.9))
+        self.log('peak*0.85=' + str(self.lastRate.highest_peak * 0.85))
         self.log('delta=' + str(deltaTradeRate))
         return(r)
 

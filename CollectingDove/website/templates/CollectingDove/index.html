@@ -9,12 +9,21 @@
   </head>
   <body class="h-100">
     <div class="container-fluid">
-      <div class="row h-100" id="ContainerChart">
-        <div class="col-sm-8">
+      <div class="row h-100">
+        <div class="col-sm-8 border-right">
           <canvas id="myChart"></canvas>
         </div>
         <div class="col-sm-4">
-          <canvas id="myChart"></canvas>
+          <div class="row h-75 border-bottom">test 75</div>
+          <div class="row h-25 overflow-auto p-1 bg-light">
+            <ul class="list-group w-100">
+              {% if sms_list %}
+                {% for sms in sms_list %}
+                  <li class="list-group-item">{{ sms }}</li>
+                {% endfor %}
+              {% endif %}
+            </ul>
+          </div>
         </div>
       </div>
       <div class="container" id="ContainerValue">

@@ -4,6 +4,7 @@ from website.models import StopTrade, Trade_BTC, Graph_RatesPerDay
 from django.template import loader
 import csv
 from datetime import datetime, timezone, timedelta
+from website.classes.SmsDevice import SmsDevice
 
 
 class BlankObj:
@@ -56,10 +57,28 @@ def index(request):
     #print('###################')
     #print(list_trades)
 
+    
+    s = SmsDevice().getAll()
+    sms_list = []
+    count_sms = s.count("Remote number")
+    start = 0
+
+    while(count_sms > 0):
+        start = s.find(":", s.find("Sent", start))
+        date = s[start+2:s.find("Coding", start)-7]
+        number = s[s.find(":", s.find("Remote number", start))+3:s.find("Status", start)-2]
+
+        if(count_sms > 1):
+            text = s[s.find("\n",s.find("Status", start))+2:s.find("Location", start)]
+        else:
+            text = s[s.find("\n",s.find("Status", start))+2:s.find("SMS parts", start)-5]
+        
+        sms_list.append(date + ", " + number + ": " + text)
+        count_sms -= 1
 
 
-    context = {'list_label':list_label,'list_trades':list_trades,'list_rates':list_rates
-    }
+
+    context = {'list_label':list_label,'list_trades':list_trades,'list_rates':list_rates,'sms_list':sms_list}
     return HttpResponse(template.render(context, request))
 
 def exportValue(request):
