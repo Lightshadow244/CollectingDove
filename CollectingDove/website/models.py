@@ -40,3 +40,11 @@ class Sms(models.Model):
     time = models.DateTimeField(default=timezone.now, blank=False)
     number = models.CharField(max_length=20)
     text  = models.TextField(blank=True)
+
+class TradeInfoModel(models.Model):
+    time = models.DateTimeField(default=timezone.now, blank=False)
+    rate = models.FloatField(blank=False)
+    peakRate = models.FloatField(default=0.0)
+    buyBtc = models.BooleanField(blank=False)
+    shouldTrade = models.BooleanField(default=False)
+    btc =  models.FloatField(blank=True, null=True)

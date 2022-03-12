@@ -7,11 +7,12 @@ class Command(BaseCommand):
         trade = Trade()
 
         if(trade.isTradeProfitable()):
+        #if(True):
             if(trade.eurToBtc == False):
                 trade.reserveValue()
                 trade.orders = trade.getOrders()
             trade.getTradeOrders()
-            trade.executeTrade()
+            #trade.executeTrade()
 
 
 

@@ -49,6 +49,7 @@ class Trade:
         self.finishedTrades = []
 
     def getOrders(self):
+        self.log("getOrders")
         getParameterJson = {'order_requirements_fullfilled': str(1)}
         if(self.lastTrade is None):
             getParameterJson['type'] = 'sell'
@@ -92,13 +93,17 @@ class Trade:
         return(r)
 
     def isTradeProfitable(self):
+        self.log("isTradeProfitable")
         r = False
         if(self.eurToBtc):
+            self.log("BtcToEur")
             self.status += 'BtcToEur,'
             rate = self.orders[-1]['price']
             deltaTradeRate = self.lastTrade.rate - float(rate)
             deltaRate = self.lastRate.rate - float(rate)
-            self.status += str(self.lastTrade.rate) + ',' + str(rate) + ','
+
+            self.status += 'lastRate,' + str(self.lastTrade.rate) + ',rate,' + str(rate) + ','
+
             profitValue = self.lastTrade.rate * 0.01
             #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
@@ -117,11 +122,14 @@ class Trade:
                 newRate.save()
                 self.status += '3,'
         else:
+            self.log("EurToBtc")
             self.status += 'EurToBtc,'
             rate = self.orders[0]['price']
             deltaTradeRate = self.lastTrade.rate - float(rate)
             deltaRate = self.lastRate.rate - float(rate)
-            self.status += str(self.lastTrade.rate) + ',' + str(rate) + ','
+
+            self.status += 'lastRate,' + str(self.lastTrade.rate) + ',rate,' + str(rate) + ','
+
             profitValue = self.lastTrade.rate * 0.01
             #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
@@ -141,7 +149,11 @@ class Trade:
                 self.status += '3,'
 
         if(r == False):
-            self.status += 'tradeNotProfitable'
+            self.status += 'tradeNotProfitable,'
+
+        self.status += "peak," + str(self.lastRate.highest_peak) + ","
+        self.status += "border," + str(self.lastRate.highest_peak * 0.85) + ","
+        self.status += "delta," + str(deltaTradeRate) + ","
         
         self.log('profitValue=' + str(profitValue))
         self.log('peak=' + str(self.lastRate.highest_peak))
@@ -151,20 +163,24 @@ class Trade:
 
 
     def getTradeOrders(self):
+        self.log("getTradeOrders")
         if(self.eurToBtc):
             counter = -1
+            lastValueBtc = self.lastValue.btc
+            self.log("lastValueBtc")
+            self.log(lastValueBtc)
             while(abs(counter) <= len(self.orders)):
                 trade = {}
                 order = self.orders[counter]
-                if(float(order['min_amount_currency_to_trade']) <= self.lastValue.btc):
-                    if(float(order['max_amount_currency_to_trade']) > self.lastValue.btc):
-                        sellBtc = self.lastValue.btc
+                if(float(order['min_amount_currency_to_trade']) <= lastValueBtc):
+                    if(float(order['max_amount_currency_to_trade']) > lastValueBtc):
+                        sellBtc = lastValueBtc
                         buyEur = sellBtc * float(order['price'])
                         counter = len(self.orders)
                     else:
                         buyEur = float(order['max_volume_currency_to_pay'])
                         sellBtc = float(order['max_amount_currency_to_trade'])
-                    #lastValue.btc = lastValue.btc - sellBtc
+                    lastValueBtc = lastValueBtc - sellBtc
                     trade['price'] = order['price']
                     trade['order_id'] = order['order_id']
                     trade['btc'] = float(str(sellBtc)[:10])
@@ -184,16 +200,18 @@ class Trade:
                     else:
                         buyBtc = float(order['max_amount_currency_to_trade'])
                         sellEur = float(order['max_volume_currency_to_pay'])
-                    #self.lastValue.eur = lastValue.eur - sellEur
+                    self.lastValue.eur = self.lastValue.eur - sellEur
                     trade['price'] = order['price']
                     trade['order_id'] = order['order_id']
                     trade['btc'] = float(str(buyBtc)[:10])
                     trade['eur'] = sellEur
                     self.tradeList.append(trade)
                 counter = counter + 1
+        self.log("tradList")
         self.log(self.tradeList)
 
-    def executeTrade(self):
+    def texecuteTrade(self):
+        self.log("executeTrade")
         r = []
         postParameterJson = {}
         postParameter = ''
@@ -203,6 +221,10 @@ class Trade:
 
         if(self.eurToBtc):
             for trade in self.tradeList:
+
+                self.log("trade btc")
+                self.log(trade['btc'])
+
                 nonce = str(int(time.time()))
                 returnTradeInfo = {}
                 uri = 'https://api.bitcoin.de/v4/btceur/trades/'
@@ -238,12 +260,16 @@ class Trade:
                     returnTradeInfo['type']  = postParameterJson['type']
                     returnTradeInfo['btc'] =    trade['btc']
                     returnTradeInfo['price'] = trade['price']
-                    returnTradeInfo['eur'] =    trade['eur'] * 0,995
+                    returnTradeInfo['eur'] =    trade['eur'] * 0.995
                     self.finishedTrades.append(returnTradeInfo)
                     if(response.status_code == 201):
                         newTrade = Trade_BTC(rate=trade['price'],eur=trade['eur'],btc=trade['btc']  * -1, eur_to_btc=False, internal_trade_id=internal_trade_id)
                         newTrade.save()
-                        newValue = Total_Value(eur=Total_Value.objects.order_by('time').last().eur + returnTradeInfo['eur'],btc=Total_Value.objects.order_by('time').last().btc - returnTradeInfo['btc'])
+
+                        wertEur = Total_Value.objects.order_by('time').last().eur + returnTradeInfo['eur']
+                        wertBtc = Total_Value.objects.order_by('time').last().btc - returnTradeInfo['btc']
+
+                        newValue = Total_Value(eur=wertEur,btc=wertBtc)
                         newValue.save()
                     else:
                         raise Exception(response.json())
@@ -283,14 +309,18 @@ class Trade:
                     returnTradeInfo['status_code'] = response.status_code
                     returnTradeInfo['order_id']  = trade['order_id']
                     returnTradeInfo['type']  = postParameterJson['type']
-                    returnTradeInfo['btc'] =    trade['btc'] * 0,995
+                    returnTradeInfo['btc'] =    trade['btc'] * 0.995
                     returnTradeInfo['price'] = trade['price']
                     returnTradeInfo['eur'] =    trade['eur']
                     self.finishedTrades.append(returnTradeInfo)
                     if(response.status_code == 201):
+
+                        wertEur = Total_Value.objects.order_by('time').last().eur - trade['eur']
+                        wertBtc = Total_Value.objects.order_by('time').last().btc + trade['btc']
+
                         newTrade = Trade_BTC(rate=trade['price'],eur=trade['eur'] * -1,btc=trade['btc'], eur_to_btc=True, internal_trade_id=internal_trade_id)
                         newTrade.save()
-                        newValue = Total_Value(eur=Total_Value.objects.order_by('time').last().eur - trade['eur'],btc=Total_Value.objects.order_by('time').last().btc + trade['btc'])
+                        newValue = Total_Value(eur=wertEur, btc= wertBtc)
                         newValue.save()
                     else:
                         self.log(response.json())
@@ -302,6 +332,7 @@ class Trade:
             self.status += str(trade['order_id']) + str(trade['price']) + str(trade['eur']) + str(trade['btc'])
 
     def reserveValue(self):
+        self.log("reserveValue")
 
 ###############################################################################
 #Bitcoin Login
