@@ -6,15 +6,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         tradeInfo = TradeInfo()
 
-        # check btc status on bitcoin.de
-        # if buyBtc = true und btc > btc letzter stand dann change buybtc to False
-        if(tradeInfo.lastTrade.shouldTrade):
-            tradeInfo.validateBtcStatus()
-
         if(tradeInfo.isTradeProfitable()):
             if(tradeInfo.lastTrade.shouldTrade == False):
                 tradeInfo.activateShouldTrade()
                 tradeInfo.inform()
+                tradeInfo.printStatus()
         else:
             if(tradeInfo.lastTrade.shouldTrade == True):
                 tradeInfo.deactivateShouldTrade()

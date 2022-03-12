@@ -8,18 +8,34 @@ class TradeInfo:
 
         self.lastTrade = TradeInfoModel.objects.order_by('time').last()
         if self.lastTrade is None:
-             raise Exception("")
+             raise Exception("No trade in db")
 
-    def getOrders(self):
+        self.buyBtc = self.lastTrade.buyBtc
+        self.shouldTrade = self.lastTrade.shouldTrade
+        
+
+        # check btc status on bitcoin.de
+        # if buyBtc = true und btc > btc letzter stand dann change buybtc to False
+        if(self.shouldTrade):
+            self.validateBtcStatus()
+        
+        if(self.buyBtc):
+            orders = self.getOrders("buy")
+            self.rate = orders[-1]['price']
+        else:
+            orders = self.getOrders("sell")
+            self.rate = orders[0]['price']
+
+        self.actualTradeInfo = TradeInfo(rate=self.rate,buyBtc=self.buyBtc, shouldTrade=self.shouldTrade)
+
+    def getOrders(self, type:str):
         self.log("getOrders")
         getParameterJson = {'order_requirements_fullfilled': str(1)}
-        if(self.lastTrade is None):
-            getParameterJson['type'] = 'sell'
-        elif(self.lastTrade.buyBtc):
-            getParameterJson['type'] = 'buy'
-        else:
-            getParameterJson['type'] = 'sell'
-        
+        if(str != "sell" and str != "buy"):
+            raise Exception("failed to get Orders, getOrders not sell or buy")
+
+        getParameterJson['type'] = type
+
         getParameter = ''
         postParameter = ''
         nonce = str(int(time.time()))
@@ -53,6 +69,26 @@ class TradeInfo:
         r = sorted(data, key = lambda i: i['price'])
 
         return(r)
+
+    def validateBtcStatus(self):
+        currentBtc = self.getCurrentBtc()
+
+        if(self.buyBtc):
+            if(currentBtc > self.lastTrade.btc):
+                # btc wurde gekauft
+                self.buyBtc = False
+                self.deactivateShouldTrade()
+        else:
+            if(currentBtc < self.lastTrade.btc):
+                # btc wurde verkauft
+                self.buyBtc = True
+                self.deactivateShouldTrade()
+
+    def activateShouldTrade(self):
+        self.shouldTrade = True
+
+    def deactivateShouldTrade(self):
+        self.shouldTrade = False
 
     def log(self, s):
         if(self.logLevel == 1):

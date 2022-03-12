@@ -47,4 +47,4 @@ class TradeInfoModel(models.Model):
     peakRate = models.FloatField(default=0.0)
     buyBtc = models.BooleanField(blank=False)
     shouldTrade = models.BooleanField(default=False)
-    btc =  models.FloatField(blank=True, null=True)
+    btc =  models.FloatField(default=0.0)
