@@ -7,14 +7,16 @@ class Command(BaseCommand):
         tradeInfo = TradeInfo()
 
         if(tradeInfo.isTradeProfitable()):
-            if(tradeInfo.lastTrade.shouldTrade == False):
+            if(tradeInfo.actualTradeInfo.shouldTrade == False):
                 tradeInfo.activateShouldTrade()
                 tradeInfo.inform()
-                tradeInfo.printStatus()
+                
         else:
-            if(tradeInfo.lastTrade.shouldTrade == True):
-                tradeInfo.deactivateShouldTrade()
+            if(tradeInfo.actualTradeInfo.shouldTrade == True):
+                tradeInfo.deactivateShouldTradeActivateLastTrade()
                 tradeInfo.inform()
+
+        tradeInfo.printAndSaveStatus()
 
 
 

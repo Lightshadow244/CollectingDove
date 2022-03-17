@@ -48,3 +48,6 @@ class TradeInfoModel(models.Model):
     buyBtc = models.BooleanField(blank=False)
     shouldTrade = models.BooleanField(default=False)
     btc =  models.FloatField(default=0.0)
+    #lastTradeRate = models.FloatField(blank=True, null=True)
+    lastTrade = models.BooleanField(default=False)
+
