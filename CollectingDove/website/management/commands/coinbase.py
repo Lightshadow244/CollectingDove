@@ -6,22 +6,11 @@ from django.core import serializers
 class Command(BaseCommand):
     def handle(self, *args, **options):
         trade = CoinbaseTrade()
-        
-        
 
         if(trade.isProfitable()):
             trade.doTrade()
             
         trade.printAndSave()
-        #    if(tradeInfo.actualTradeInfo.shouldTrade == False):
-        #        tradeInfo.activateShouldTrade()
-        #        tradeInfo.inform()
-                
-        #else:
-        #    if(tradeInfo.actualTradeInfo.shouldTrade == True):
-        #        tradeInfo.deactivateShouldTradeActivateLastTrade()
-        #        tradeInfo.inform()
-
-        #tradeInfo.printAndSaveStatus()
+       
         arr = [trade.actualTrade]
         print(serializers.serialize("json", arr))

@@ -47,7 +47,7 @@ class CoinbaseTrade:
 
             self.log('lastTradeRate,' + str(self.lastTrade.rate) + ' rate,' + str(rate))
             
-            profitValue = self.lastTrade.rate * 0.02
+            profitValue = self.lastTrade.rate * 0.03
             #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
             #newRate = Trade_BTC(rate=rate)
@@ -64,7 +64,7 @@ class CoinbaseTrade:
             
             self.log('lastTradeRate,' + str(self.lastTrade.rate) + ' rate,' + str(rate))
 
-            profitValue = self.lastTrade.rate * 0.02
+            profitValue = self.lastTrade.rate * 0.03
 
             if(deltaTradeRate > profitValue and deltaTradeRate < self.lastRate.peakRate * 0.85):
                 self.actualTrade.status = "1"
