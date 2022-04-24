@@ -1,6 +1,5 @@
 from website.classes.TradeInfo import TradeInfo
 from django.core.management.base import BaseCommand, CommandError
-from website.models import StopTrade
 
 class Command(BaseCommand):
     def handle(self, *args, **options):

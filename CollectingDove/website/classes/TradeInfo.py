@@ -8,7 +8,7 @@ from django.core import serializers
 
 class TradeInfo:
     def __init__(self):
-        self.logLevel = 0
+        self.logLevel = 1
         
         if(path.exists(path.join(BASE_DIR, 'website/apikey.private'),)):
             with open(path.join(BASE_DIR, 'website/apikey.private')) as json_file:
@@ -20,46 +20,37 @@ class TradeInfo:
         self.lastRateInfo = TradeInfoModel.objects.order_by('time').last()
         if self.lastRateInfo is None:
             raise Exception("No trade in db")
-            #self.initTradeInfoInDb()
-            #self.lastRateInfo = TradeInfoModel.objects.order_by('time').last()
-
+            
         self.lastTradeInfo = TradeInfoModel.objects.exclude(lastTrade = False).order_by('time').last()
         if self.lastTradeInfo is None:
             raise Exception("No lastTrade in db")
 
-        self.buyBtc = self.lastRateInfo.buyBtc
-        self.shouldTrade = self.lastRateInfo.shouldTrade
-        self.btc = self.lastRateInfo.btc
-        self.lastTrade = False
-        
+        self.actualTradeInfo = TradeInfoModel(
+            buyBtc      = self.lastRateInfo.buyBtc,
+            shouldTrade = self.lastRateInfo.shouldTrade,
+            btc         = self.lastRateInfo.btc,
+            lastTrade   = False
+        )        
 
         # check btc status on bitcoin.de
         # if buyBtc = true und btc > btc letzter stand dann change buybtc to False
-        if(self.shouldTrade):
+        if(self.actualTradeInfo.shouldTrade):
             self.validateBtcStatus()
         
-        if(self.buyBtc):
+        if(self.actualTradeInfo.buyBtc):
             orders = self.getOrders("buy")
-            self.rate = orders[-1]['price']
+            self.actualTradeInfo.rate = orders[-1]['price']
         else:
             orders = self.getOrders("sell")
-            self.rate = orders[0]['price']
+            self.actualTradeInfo.rate = orders[0]['price']
 
         #self.log("rate: " + str(self.rate))
         #self.log("buyBtc: " + str(self.buyBtc))
         #self.log("shouldTrade: " + str(self.shouldTrade))
         
-        self.actualTradeInfo = TradeInfoModel(
-            rate            = self.rate,
-            buyBtc          = self.buyBtc, 
-            shouldTrade     = self.shouldTrade,
-            peakRate        = self.lastRateInfo.peakRate,
-            btc             = self.btc,
-            lastTrade       = self.lastTrade
-        )
 
     def getOrders(self, type:str):
-        self.log("getOrders")
+        #self.log("getOrders")
         getParameterJson = {'order_requirements_fullfilled': str(1)}
         if(type != "sell" and type != "buy"):
             raise Exception("failed to get Orders, getOrders not sell or buy")
@@ -104,14 +95,14 @@ class TradeInfo:
         self.log("validate btc status")
         currentBtc = self.getCurrentBtc()
 
-        if(self.buyBtc):
-            if(currentBtc > self.btc):
+        if(self.actualTradeInfo.buyBtc):
+            if(currentBtc > self.actualTradeInfo.btc):
                 # btc wurde gekauft
                 self.buyBtc = False
                 self.deactivateShouldTradeActivateLastTrade()
                 self.btc = currentBtc
         else:
-            if(currentBtc < self.btc):
+            if(currentBtc < self.actualTradeInfo.btc):
                 # btc wurde verkauft
                 self.buyBtc = True
                 self.deactivateShouldTradeActivateLastTrade()
@@ -147,33 +138,19 @@ class TradeInfo:
                 raise Exception("Error retrieving data")
         return(float(r))
 
-    def initTradeInfoInDb(self):
-        self.log("init tradeInfo in db")
-        currentBtc = float(self.getCurrentBtc())
-
-        if currentBtc > 0.001:
-            orders = self.getOrders("sell")
-            price = orders[0]['price']
-            buyBtc = False
-        else:
-            orders = self.getOrders("buy")
-            price = orders[-1]['price']
-            buyBtc = True
-
-        TradeInfoModel(rate=price,buyBtc=buyBtc, shouldTrade=False).save()
-
     def isTradeProfitable(self):
-        self.log("isTradeProfitable")
+        #self.log("isTradeProfitable")
+        self.log("buyBTC: " + str(self.actualTradeInfo.buyBtc))
         r = False
 
-        rate = self.rate
+        rate = self.actualTradeInfo.rate
         deltaTradeRate = self.lastTradeInfo.rate - float(rate)
 
-        if(self.buyBtc == False):
+        if(self.actualTradeInfo.buyBtc == False):
 
             self.log('lastTradeRate,' + str(self.lastTradeInfo.rate) + ' rate,' + str(rate))
             
-            profitValue = self.lastTradeInfo.rate * 0.01
+            profitValue = self.lastTradeInfo.rate * 0.02
             #debugText += 'dtr: ' + str(deltaTradeRate) + ', dr: ' + str(deltaRate) + ','
 
             #newRate = Trade_BTC(rate=rate)
@@ -190,7 +167,7 @@ class TradeInfo:
             
             self.log('lastTradeRate,' + str(self.lastTradeInfo.rate) + ' rate,' + str(rate))
 
-            profitValue = self.lastTradeInfo.rate * 0.01
+            profitValue = self.lastTradeInfo.rate * 0.02
 
             if(deltaTradeRate > profitValue and deltaTradeRate < self.lastRateInfo.peakRate * 0.85):
                 self.log("1")
@@ -227,9 +204,9 @@ class TradeInfo:
             msg["Subject"] = "[collectingDove] x x x"
 
         if self.actualTradeInfo.buyBtc:
-            msg.set_content("rate: {rate} | lastRate: {lastRate} | buy btc".format(rate=self.actualTradeInfo.rate, lastRate=self.lastRateInfo.rate))
+            msg.set_content("rate: {rate} | lastRate: {lastRate} | buy btc".format(rate=self.actualTradeInfo.rate, lastRate=self.lastTradeInfo.rate))
         else:
-            msg.set_content("rate: {rate} | lastRate: {lastRate}| sell btc".format(rate=self.actualTradeInfo.rate, lastRate=self.lastRateInfo.rate))
+            msg.set_content("rate: {rate} | lastRate: {lastRate}| sell btc".format(rate=self.actualTradeInfo.rate, lastRate=self.lastTradeInfo.rate))
 
         self.sendMail(msg)
        
@@ -244,11 +221,11 @@ class TradeInfo:
         print(serializers.serialize("json", arr))
 
     def activateShouldTrade(self):
-        self.shouldTrade = True
+        self.actualTradeInfo.shouldTrade = True
 
     def deactivateShouldTradeActivateLastTrade(self):
-        self.shouldTrade = False
-        self.lastTrade = True
+        self.actualTradeInfo.shouldTrade = False
+        self.actualTradeInfo.lastTrade = True
 
     def saveRate(self):
         pass

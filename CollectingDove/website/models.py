@@ -1,6 +1,6 @@
 from django.db import models
-from datetime import datetime
 from django.utils import timezone
+import time
 
 """for django API
 from website.models import Trade_BTC_test
@@ -42,7 +42,8 @@ class Sms(models.Model):
     text  = models.TextField(blank=True)
 
 class TradeInfoModel(models.Model):
-    time = models.DateTimeField(default=timezone.now, blank=False)
+    #time = models.DateTimeField(default=timezone.now, blank=False)
+    time = models.CharField(max_length=11,default=str(time.mktime(timezone.now().timetuple()))[:-2], blank=False)
     rate = models.FloatField(blank=False)
     peakRate = models.FloatField(default=0.0)
     buyBtc = models.BooleanField(blank=False)
@@ -50,4 +51,18 @@ class TradeInfoModel(models.Model):
     btc =  models.FloatField(default=0.0)
     #lastTradeRate = models.FloatField(blank=True, null=True)
     lastTrade = models.BooleanField(default=False)
+
+class CoinbaseTradeModel(models.Model):
+    time = models.CharField(max_length=11,default=str(time.mktime(timezone.now().timetuple()))[:-2], blank=False)
+    rate = models.FloatField(blank=False)
+    peakRate = models.FloatField(default=0.0)
+    buyBtc = models.BooleanField(blank=False)
+    btc =  models.FloatField(default=0.0)
+    eur =  models.FloatField(default=0.0)
+    isTrade = models.BooleanField(default=False)
+    status = models.CharField(max_length=1, default="3")
+
+class Test(models.Model):
+    time = models.CharField(max_length=11)
+    value = models.FloatField(default=0.0)
 
