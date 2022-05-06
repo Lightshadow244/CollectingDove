@@ -4,9 +4,10 @@ from os import path
 import json, time, hashlib, requests, hmac
 from django.core import serializers
 
+
 class CoinbaseAPI:
     def __init__(self):
-        self.logLevel = 1
+        self.logLevel = 0
 
         if(path.exists(path.join(BASE_DIR, 'website/coinbase_apikey.private'),)):
             with open(path.join(BASE_DIR, 'website/coinbase_apikey.private')) as json_file:
@@ -144,13 +145,13 @@ class CoinbaseAPI:
     def postSell(self, totalAmount):
         self.log("postSell")
         
-        path = "/v2/accounts/" + self.accountEurId + "/sells"
+        path = "/v2/accounts/" + self.accountBtcId + "/sells"
         url = self.basePath + path
 
         method = "POST"
         body = {
             "currency": "BTC",
-            "total": str(totalAmount),
+            "amount": str(totalAmount),
             "payment_method": self.paymentMethod["id"]
         }
         
