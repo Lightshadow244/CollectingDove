@@ -53,7 +53,7 @@ class TradeInfoModel(models.Model):
     lastTrade = models.BooleanField(default=False)
 
 class CoinbaseTradeModel(models.Model):
-    time = models.CharField(max_length=11,default=str(time.mktime(timezone.now().timetuple()))[:-2], blank=False)
+    time = models.CharField(max_length=11,default=str(time.mktime(timezone.localtime(timezone.now()).timetuple()))[:-2], blank=False)
     rate = models.FloatField(blank=False)
     peakRate = models.FloatField(default=0.0)
     buyBtc = models.BooleanField(blank=False)

@@ -139,3 +139,6 @@ tmp/
 
 # visual studio code
 .vscode/
+
+#firebase api
+firebase-api-key.json
