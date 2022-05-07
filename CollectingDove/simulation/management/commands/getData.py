@@ -12,8 +12,8 @@ from firebase_admin import firestore
 class Command(BaseCommand):
     def handle(self, *args, **options):
 
-        if(path.exists(path.join(BASE_DIR, 'simulation/.firebase-api-key.json'),)):
-            firebase_cred = credentials.Certificate("simulation/.firebase-api-key.json")
+        if(path.exists(path.join(BASE_DIR, 'simulation/firebase-api-key.json'),)):
+            firebase_cred = credentials.Certificate(path.join(BASE_DIR, 'simulation/firebase-api-key.json'))
         else:
             raise Exception("no api credentials were given")
 
